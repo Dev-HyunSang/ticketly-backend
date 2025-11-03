@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ticketly-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "5vZEVTi+,Bf?zN01)H9o"
+      MYSQL_DATABASE: ticketly
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: ticketly-redis
+    restart: unless-stopped
+    command: redis-server --requirepass "n3J^3UumvaV)M^e8ijxU"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--auth", "n3J^3UumvaV)M^e8ijxU", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql-data:
+  redis-data:
