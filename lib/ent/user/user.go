@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -34,8 +35,35 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// EdgeOwnedOrganizations holds the string denoting the owned_organizations edge name in mutations.
+	EdgeOwnedOrganizations = "owned_organizations"
+	// EdgeMemberships holds the string denoting the memberships edge name in mutations.
+	EdgeMemberships = "memberships"
+	// EdgeCreatedEvents holds the string denoting the created_events edge name in mutations.
+	EdgeCreatedEvents = "created_events"
 	// Table holds the table name of the user in the database.
 	Table = "users"
+	// OwnedOrganizationsTable is the table that holds the owned_organizations relation/edge.
+	OwnedOrganizationsTable = "organizations"
+	// OwnedOrganizationsInverseTable is the table name for the Organization entity.
+	// It exists in this package in order to avoid circular dependency with the "organization" package.
+	OwnedOrganizationsInverseTable = "organizations"
+	// OwnedOrganizationsColumn is the table column denoting the owned_organizations relation/edge.
+	OwnedOrganizationsColumn = "owner_id"
+	// MembershipsTable is the table that holds the memberships relation/edge.
+	MembershipsTable = "organization_members"
+	// MembershipsInverseTable is the table name for the OrganizationMember entity.
+	// It exists in this package in order to avoid circular dependency with the "organizationmember" package.
+	MembershipsInverseTable = "organization_members"
+	// MembershipsColumn is the table column denoting the memberships relation/edge.
+	MembershipsColumn = "user_id"
+	// CreatedEventsTable is the table that holds the created_events relation/edge.
+	CreatedEventsTable = "events"
+	// CreatedEventsInverseTable is the table name for the Event entity.
+	// It exists in this package in order to avoid circular dependency with the "event" package.
+	CreatedEventsInverseTable = "events"
+	// CreatedEventsColumn is the table column denoting the created_events relation/edge.
+	CreatedEventsColumn = "created_by"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -130,4 +158,67 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByOwnedOrganizationsCount orders the results by owned_organizations count.
+func ByOwnedOrganizationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newOwnedOrganizationsStep(), opts...)
+	}
+}
+
+// ByOwnedOrganizations orders the results by owned_organizations terms.
+func ByOwnedOrganizations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOwnedOrganizationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByMembershipsCount orders the results by memberships count.
+func ByMembershipsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newMembershipsStep(), opts...)
+	}
+}
+
+// ByMemberships orders the results by memberships terms.
+func ByMemberships(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMembershipsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByCreatedEventsCount orders the results by created_events count.
+func ByCreatedEventsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCreatedEventsStep(), opts...)
+	}
+}
+
+// ByCreatedEvents orders the results by created_events terms.
+func ByCreatedEvents(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCreatedEventsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newOwnedOrganizationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OwnedOrganizationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, OwnedOrganizationsTable, OwnedOrganizationsColumn),
+	)
+}
+func newMembershipsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(MembershipsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, MembershipsTable, MembershipsColumn),
+	)
+}
+func newCreatedEventsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CreatedEventsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, CreatedEventsTable, CreatedEventsColumn),
+	)
 }

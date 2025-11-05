@@ -8,6 +8,102 @@ import (
 )
 
 var (
+	// EventsColumns holds the columns for the "events" table.
+	EventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "title", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "location", Type: field.TypeString, Nullable: true},
+		{Name: "venue", Type: field.TypeString, Nullable: true},
+		{Name: "start_time", Type: field.TypeTime},
+		{Name: "end_time", Type: field.TypeTime},
+		{Name: "total_tickets", Type: field.TypeInt, Default: 0},
+		{Name: "available_tickets", Type: field.TypeInt, Default: 0},
+		{Name: "ticket_price", Type: field.TypeFloat64, Default: 0},
+		{Name: "currency", Type: field.TypeString, Default: "KRW"},
+		{Name: "thumbnail_url", Type: field.TypeString, Nullable: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "published", "ongoing", "completed", "cancelled"}, Default: "draft"},
+		{Name: "is_public", Type: field.TypeBool, Default: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "created_by", Type: field.TypeUUID},
+	}
+	// EventsTable holds the schema information for the "events" table.
+	EventsTable = &schema.Table{
+		Name:       "events",
+		Columns:    EventsColumns,
+		PrimaryKey: []*schema.Column{EventsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "events_organizations_events",
+				Columns:    []*schema.Column{EventsColumns[16]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "events_users_created_events",
+				Columns:    []*schema.Column{EventsColumns[17]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// OrganizationsColumns holds the columns for the "organizations" table.
+	OrganizationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "logo_url", Type: field.TypeString, Nullable: true},
+		{Name: "is_active", Type: field.TypeBool, Default: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "owner_id", Type: field.TypeUUID},
+	}
+	// OrganizationsTable holds the schema information for the "organizations" table.
+	OrganizationsTable = &schema.Table{
+		Name:       "organizations",
+		Columns:    OrganizationsColumns,
+		PrimaryKey: []*schema.Column{OrganizationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "organizations_users_owned_organizations",
+				Columns:    []*schema.Column{OrganizationsColumns[7]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// OrganizationMembersColumns holds the columns for the "organization_members" table.
+	OrganizationMembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"admin", "member"}, Default: "member"},
+		{Name: "joined_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "user_id", Type: field.TypeUUID},
+	}
+	// OrganizationMembersTable holds the schema information for the "organization_members" table.
+	OrganizationMembersTable = &schema.Table{
+		Name:       "organization_members",
+		Columns:    OrganizationMembersColumns,
+		PrimaryKey: []*schema.Column{OrganizationMembersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "organization_members_organizations_members",
+				Columns:    []*schema.Column{OrganizationMembersColumns[5]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "organization_members_users_memberships",
+				Columns:    []*schema.Column{OrganizationMembersColumns[6]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -30,9 +126,17 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		EventsTable,
+		OrganizationsTable,
+		OrganizationMembersTable,
 		UsersTable,
 	}
 )
 
 func init() {
+	EventsTable.ForeignKeys[0].RefTable = OrganizationsTable
+	EventsTable.ForeignKeys[1].RefTable = UsersTable
+	OrganizationsTable.ForeignKeys[0].RefTable = UsersTable
+	OrganizationMembersTable.ForeignKeys[0].RefTable = OrganizationsTable
+	OrganizationMembersTable.ForeignKeys[1].RefTable = UsersTable
 }

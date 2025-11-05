@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/predicate"
 	"github.com/google/uuid"
 )
@@ -648,6 +649,75 @@ func UpdatedAtLT(v time.Time) predicate.User {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// HasOwnedOrganizations applies the HasEdge predicate on the "owned_organizations" edge.
+func HasOwnedOrganizations() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, OwnedOrganizationsTable, OwnedOrganizationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOwnedOrganizationsWith applies the HasEdge predicate on the "owned_organizations" edge with a given conditions (other predicates).
+func HasOwnedOrganizationsWith(preds ...predicate.Organization) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newOwnedOrganizationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasMemberships applies the HasEdge predicate on the "memberships" edge.
+func HasMemberships() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, MembershipsTable, MembershipsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMembershipsWith applies the HasEdge predicate on the "memberships" edge with a given conditions (other predicates).
+func HasMembershipsWith(preds ...predicate.OrganizationMember) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newMembershipsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasCreatedEvents applies the HasEdge predicate on the "created_events" edge.
+func HasCreatedEvents() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, CreatedEventsTable, CreatedEventsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCreatedEventsWith applies the HasEdge predicate on the "created_events" edge with a given conditions (other predicates).
+func HasCreatedEventsWith(preds ...predicate.Event) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newCreatedEventsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

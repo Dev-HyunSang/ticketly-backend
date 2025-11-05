@@ -37,8 +37,51 @@ type User struct {
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the UserQuery when eager-loading is set.
+	Edges        UserEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// UserEdges holds the relations/edges for other nodes in the graph.
+type UserEdges struct {
+	// OwnedOrganizations holds the value of the owned_organizations edge.
+	OwnedOrganizations []*Organization `json:"owned_organizations,omitempty"`
+	// Memberships holds the value of the memberships edge.
+	Memberships []*OrganizationMember `json:"memberships,omitempty"`
+	// CreatedEvents holds the value of the created_events edge.
+	CreatedEvents []*Event `json:"created_events,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [3]bool
+}
+
+// OwnedOrganizationsOrErr returns the OwnedOrganizations value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) OwnedOrganizationsOrErr() ([]*Organization, error) {
+	if e.loadedTypes[0] {
+		return e.OwnedOrganizations, nil
+	}
+	return nil, &NotLoadedError{edge: "owned_organizations"}
+}
+
+// MembershipsOrErr returns the Memberships value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) MembershipsOrErr() ([]*OrganizationMember, error) {
+	if e.loadedTypes[1] {
+		return e.Memberships, nil
+	}
+	return nil, &NotLoadedError{edge: "memberships"}
+}
+
+// CreatedEventsOrErr returns the CreatedEvents value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) CreatedEventsOrErr() ([]*Event, error) {
+	if e.loadedTypes[2] {
+		return e.CreatedEvents, nil
+	}
+	return nil, &NotLoadedError{edge: "created_events"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -146,6 +189,21 @@ func (_m *User) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *User) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryOwnedOrganizations queries the "owned_organizations" edge of the User entity.
+func (_m *User) QueryOwnedOrganizations() *OrganizationQuery {
+	return NewUserClient(_m.config).QueryOwnedOrganizations(_m)
+}
+
+// QueryMemberships queries the "memberships" edge of the User entity.
+func (_m *User) QueryMemberships() *OrganizationMemberQuery {
+	return NewUserClient(_m.config).QueryMemberships(_m)
+}
+
+// QueryCreatedEvents queries the "created_events" edge of the User entity.
+func (_m *User) QueryCreatedEvents() *EventQuery {
+	return NewUserClient(_m.config).QueryCreatedEvents(_m)
 }
 
 // Update returns a builder for updating this User.

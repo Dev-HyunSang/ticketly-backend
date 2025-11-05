@@ -5,6 +5,9 @@ package ent
 import (
 	"time"
 
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/event"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organization"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organizationmember"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/schema"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/user"
 	"github.com/google/uuid"
@@ -14,6 +17,96 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	eventFields := schema.Event{}.Fields()
+	_ = eventFields
+	// eventDescTitle is the schema descriptor for title field.
+	eventDescTitle := eventFields[2].Descriptor()
+	// event.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	event.TitleValidator = eventDescTitle.Validators[0].(func(string) error)
+	// eventDescTotalTickets is the schema descriptor for total_tickets field.
+	eventDescTotalTickets := eventFields[8].Descriptor()
+	// event.DefaultTotalTickets holds the default value on creation for the total_tickets field.
+	event.DefaultTotalTickets = eventDescTotalTickets.Default.(int)
+	// event.TotalTicketsValidator is a validator for the "total_tickets" field. It is called by the builders before save.
+	event.TotalTicketsValidator = eventDescTotalTickets.Validators[0].(func(int) error)
+	// eventDescAvailableTickets is the schema descriptor for available_tickets field.
+	eventDescAvailableTickets := eventFields[9].Descriptor()
+	// event.DefaultAvailableTickets holds the default value on creation for the available_tickets field.
+	event.DefaultAvailableTickets = eventDescAvailableTickets.Default.(int)
+	// event.AvailableTicketsValidator is a validator for the "available_tickets" field. It is called by the builders before save.
+	event.AvailableTicketsValidator = eventDescAvailableTickets.Validators[0].(func(int) error)
+	// eventDescTicketPrice is the schema descriptor for ticket_price field.
+	eventDescTicketPrice := eventFields[10].Descriptor()
+	// event.DefaultTicketPrice holds the default value on creation for the ticket_price field.
+	event.DefaultTicketPrice = eventDescTicketPrice.Default.(float64)
+	// event.TicketPriceValidator is a validator for the "ticket_price" field. It is called by the builders before save.
+	event.TicketPriceValidator = eventDescTicketPrice.Validators[0].(func(float64) error)
+	// eventDescCurrency is the schema descriptor for currency field.
+	eventDescCurrency := eventFields[11].Descriptor()
+	// event.DefaultCurrency holds the default value on creation for the currency field.
+	event.DefaultCurrency = eventDescCurrency.Default.(string)
+	// eventDescIsPublic is the schema descriptor for is_public field.
+	eventDescIsPublic := eventFields[14].Descriptor()
+	// event.DefaultIsPublic holds the default value on creation for the is_public field.
+	event.DefaultIsPublic = eventDescIsPublic.Default.(bool)
+	// eventDescCreatedAt is the schema descriptor for created_at field.
+	eventDescCreatedAt := eventFields[16].Descriptor()
+	// event.DefaultCreatedAt holds the default value on creation for the created_at field.
+	event.DefaultCreatedAt = eventDescCreatedAt.Default.(func() time.Time)
+	// eventDescUpdatedAt is the schema descriptor for updated_at field.
+	eventDescUpdatedAt := eventFields[17].Descriptor()
+	// event.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	event.DefaultUpdatedAt = eventDescUpdatedAt.Default.(func() time.Time)
+	// event.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	event.UpdateDefaultUpdatedAt = eventDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// eventDescID is the schema descriptor for id field.
+	eventDescID := eventFields[0].Descriptor()
+	// event.DefaultID holds the default value on creation for the id field.
+	event.DefaultID = eventDescID.Default.(func() uuid.UUID)
+	organizationFields := schema.Organization{}.Fields()
+	_ = organizationFields
+	// organizationDescName is the schema descriptor for name field.
+	organizationDescName := organizationFields[1].Descriptor()
+	// organization.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	organization.NameValidator = organizationDescName.Validators[0].(func(string) error)
+	// organizationDescIsActive is the schema descriptor for is_active field.
+	organizationDescIsActive := organizationFields[5].Descriptor()
+	// organization.DefaultIsActive holds the default value on creation for the is_active field.
+	organization.DefaultIsActive = organizationDescIsActive.Default.(bool)
+	// organizationDescCreatedAt is the schema descriptor for created_at field.
+	organizationDescCreatedAt := organizationFields[6].Descriptor()
+	// organization.DefaultCreatedAt holds the default value on creation for the created_at field.
+	organization.DefaultCreatedAt = organizationDescCreatedAt.Default.(func() time.Time)
+	// organizationDescUpdatedAt is the schema descriptor for updated_at field.
+	organizationDescUpdatedAt := organizationFields[7].Descriptor()
+	// organization.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	organization.DefaultUpdatedAt = organizationDescUpdatedAt.Default.(func() time.Time)
+	// organization.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	organization.UpdateDefaultUpdatedAt = organizationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// organizationDescID is the schema descriptor for id field.
+	organizationDescID := organizationFields[0].Descriptor()
+	// organization.DefaultID holds the default value on creation for the id field.
+	organization.DefaultID = organizationDescID.Default.(func() uuid.UUID)
+	organizationmemberFields := schema.OrganizationMember{}.Fields()
+	_ = organizationmemberFields
+	// organizationmemberDescJoinedAt is the schema descriptor for joined_at field.
+	organizationmemberDescJoinedAt := organizationmemberFields[4].Descriptor()
+	// organizationmember.DefaultJoinedAt holds the default value on creation for the joined_at field.
+	organizationmember.DefaultJoinedAt = organizationmemberDescJoinedAt.Default.(func() time.Time)
+	// organizationmemberDescCreatedAt is the schema descriptor for created_at field.
+	organizationmemberDescCreatedAt := organizationmemberFields[5].Descriptor()
+	// organizationmember.DefaultCreatedAt holds the default value on creation for the created_at field.
+	organizationmember.DefaultCreatedAt = organizationmemberDescCreatedAt.Default.(func() time.Time)
+	// organizationmemberDescUpdatedAt is the schema descriptor for updated_at field.
+	organizationmemberDescUpdatedAt := organizationmemberFields[6].Descriptor()
+	// organizationmember.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	organizationmember.DefaultUpdatedAt = organizationmemberDescUpdatedAt.Default.(func() time.Time)
+	// organizationmember.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	organizationmember.UpdateDefaultUpdatedAt = organizationmemberDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// organizationmemberDescID is the schema descriptor for id field.
+	organizationmemberDescID := organizationmemberFields[0].Descriptor()
+	// organizationmember.DefaultID holds the default value on creation for the id field.
+	organizationmember.DefaultID = organizationmemberDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescIsValid is the schema descriptor for is_valid field.

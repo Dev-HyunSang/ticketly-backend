@@ -10,6 +10,9 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/event"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organization"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organizationmember"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/user"
 	"github.com/google/uuid"
 )
@@ -117,6 +120,51 @@ func (_c *UserCreate) SetNillableID(v *uuid.UUID) *UserCreate {
 		_c.SetID(*v)
 	}
 	return _c
+}
+
+// AddOwnedOrganizationIDs adds the "owned_organizations" edge to the Organization entity by IDs.
+func (_c *UserCreate) AddOwnedOrganizationIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddOwnedOrganizationIDs(ids...)
+	return _c
+}
+
+// AddOwnedOrganizations adds the "owned_organizations" edges to the Organization entity.
+func (_c *UserCreate) AddOwnedOrganizations(v ...*Organization) *UserCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddOwnedOrganizationIDs(ids...)
+}
+
+// AddMembershipIDs adds the "memberships" edge to the OrganizationMember entity by IDs.
+func (_c *UserCreate) AddMembershipIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddMembershipIDs(ids...)
+	return _c
+}
+
+// AddMemberships adds the "memberships" edges to the OrganizationMember entity.
+func (_c *UserCreate) AddMemberships(v ...*OrganizationMember) *UserCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddMembershipIDs(ids...)
+}
+
+// AddCreatedEventIDs adds the "created_events" edge to the Event entity by IDs.
+func (_c *UserCreate) AddCreatedEventIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddCreatedEventIDs(ids...)
+	return _c
+}
+
+// AddCreatedEvents adds the "created_events" edges to the Event entity.
+func (_c *UserCreate) AddCreatedEvents(v ...*Event) *UserCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddCreatedEventIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -278,6 +326,54 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := _c.mutation.OwnedOrganizationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OwnedOrganizationsTable,
+			Columns: []string{user.OwnedOrganizationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.MembershipsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.MembershipsTable,
+			Columns: []string{user.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organizationmember.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.CreatedEventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CreatedEventsTable,
+			Columns: []string{user.CreatedEventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

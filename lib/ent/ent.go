@@ -12,6 +12,9 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/event"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organization"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organizationmember"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/user"
 )
 
@@ -73,7 +76,10 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			user.Table: user.ValidColumn,
+			event.Table:              event.ValidColumn,
+			organization.Table:       organization.ValidColumn,
+			organizationmember.Table: organizationmember.ValidColumn,
+			user.Table:               user.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)
