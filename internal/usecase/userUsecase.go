@@ -2,15 +2,22 @@ package usecase
 
 import (
 	"github.com/dev-hyunsang/ticketly-backend/internal/domain"
-	"github.com/dev-hyunsang/ticketly-backend/internal/repository/mysql"
 	"github.com/google/uuid"
 )
+
+type UserUseCase interface {
+	Save(user *domain.User) (*domain.User, error)
+	GetUserByID(userID uuid.UUID) (*domain.User, error)
+	GetUserByEmail(userEmail string) (*domain.User, error)
+	Update(user *domain.User) error
+	DeleteUserByID(userID uuid.UUID) error
+}
 
 type userUseCase struct {
 	userRepo domain.UserRepository
 }
 
-func NewUserUseCase(userRepo *mysql.UserRepository) *userUseCase {
+func NewUserUseCase(userRepo domain.UserRepository) UserUseCase {
 	return &userUseCase{
 		userRepo: userRepo,
 	}

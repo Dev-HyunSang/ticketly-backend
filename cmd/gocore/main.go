@@ -40,6 +40,8 @@ func main() {
 	// Initialize repositories
 	userRepo := mysql.NewUserRepository(client)
 	tokenRepo := redis.NewTokenRepository(redisClient)
+	orgRepo := mysql.NewOrganizationRepository(client)
+	eventRepo := mysql.NewEventRepository(client)
 
 	// Initialize utilities
 	jwtUtil := util.NewJWTUtil()
@@ -47,9 +49,13 @@ func main() {
 	// Initialize use cases
 	userUseCase := usecase.NewUserUseCase(userRepo)
 	authUseCase := usecase.NewAuthUseCase(userRepo, tokenRepo, jwtUtil)
+	orgUseCase := usecase.NewOrganizationUseCase(orgRepo)
+	eventUseCase := usecase.NewEventUseCase(eventRepo, orgRepo)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authUseCase)
+	orgHandler := handler.NewOrganizationHandler(orgUseCase)
+	eventHandler := handler.NewEventHandler(eventUseCase)
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(authUseCase)
@@ -83,6 +89,36 @@ func main() {
 	// User routes
 	user := api.Group("/users")
 	_ = user // userHandler will be added later
+
+	// Organization routes
+	orgs := api.Group("/organizations")
+	orgs.Post("/", orgHandler.CreateOrganization)
+	orgs.Get("/my", orgHandler.GetMyOrganizations)
+	orgs.Get("/:id", orgHandler.GetOrganization)
+	orgs.Put("/:id", orgHandler.UpdateOrganization)
+	orgs.Delete("/:id", orgHandler.DeleteOrganization)
+
+	// Organization member routes
+	orgs.Get("/:id/members", orgHandler.GetMembers)
+	orgs.Post("/:id/members", orgHandler.AddMember)
+	orgs.Delete("/:id/members/:userId", orgHandler.RemoveMember)
+	orgs.Put("/:id/members/:userId", orgHandler.UpdateMemberRole)
+
+	// Organization events routes
+	orgs.Post("/:orgId/events", eventHandler.CreateEvent)
+	orgs.Get("/:orgId/events", eventHandler.GetOrganizationEvents)
+
+	// Event routes
+	events := api.Group("/events")
+	events.Get("/:id", eventHandler.GetEvent)
+	events.Put("/:id", eventHandler.UpdateEvent)
+	events.Delete("/:id", eventHandler.DeleteEvent)
+
+	// Public event routes (no authentication)
+	publicEvents := app.Group("/public/events")
+	publicEvents.Get("/", eventHandler.GetPublicEvents)
+	publicEvents.Get("/upcoming", eventHandler.GetUpcomingEvents)
+	publicEvents.Get("/search", eventHandler.SearchEvents)
 
 	_ = userUseCase // Use it to avoid unused variable error
 
