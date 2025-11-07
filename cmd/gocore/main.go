@@ -80,6 +80,7 @@ func main() {
 	auth.Post("/register", authHandler.Register)
 	auth.Post("/login", authHandler.Login)
 	auth.Post("/refresh", authHandler.RefreshToken)
+	auth.Post("/logout", authHandler.Logout)
 
 	// Protected routes (authentication required)
 	api := app.Group("/api", authMiddleware.Authenticate)
