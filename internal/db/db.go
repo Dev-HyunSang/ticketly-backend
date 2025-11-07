@@ -8,6 +8,7 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/dev-hyunsang/ticketly-backend/config"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func ConnectMySQL() (*ent.Client, error) {
