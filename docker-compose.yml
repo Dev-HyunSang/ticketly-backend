@@ -5,8 +5,10 @@ services:
     image: mysql:8.0
     container_name: ticketly-mysql
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      MYSQL_ROOT_PASSWORD: "5vZEVTi+,Bf?zN01)H9o"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ticketly
     ports:
       - "3306:3306"
@@ -22,13 +24,15 @@ services:
     image: redis:7
     container_name: ticketly-redis
     restart: unless-stopped
-    command: redis-server --requirepass "n3J^3UumvaV)M^e8ijxU"
+    env_file:
+      - .env
+    command: redis-server --requirepass "${REDIS_PASSWORD}"
     ports:
       - "6379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "--auth", "n3J^3UumvaV)M^e8ijxU", "ping"]
+      test: ["CMD", "redis-cli", "--auth", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
