@@ -45,6 +45,7 @@ type EventRepository interface {
 	GetPublicEvents() ([]*EventWithOrganization, error)
 	GetEventsByStatus(status string) ([]*EventWithOrganization, error)
 	GetUpcomingEvents() ([]*EventWithOrganization, error)
+	GetPopularEvents(threshold float64) ([]*EventWithOrganization, error)
 	SearchEvents(keyword string) ([]*EventWithOrganization, error)
 
 	// Ticket management

@@ -19,6 +19,7 @@ type EventUseCase interface {
 	// Public queries
 	GetPublicEvents() ([]*domain.EventWithOrganization, error)
 	GetUpcomingEvents() ([]*domain.EventWithOrganization, error)
+	GetPopularEvents() ([]*domain.EventWithOrganization, error)
 	SearchEvents(keyword string) ([]*domain.EventWithOrganization, error)
 
 	// Ticket management
@@ -237,6 +238,13 @@ func (uc *eventUseCase) GetPublicEvents() ([]*domain.EventWithOrganization, erro
 // GetUpcomingEvents retrieves upcoming public events
 func (uc *eventUseCase) GetUpcomingEvents() ([]*domain.EventWithOrganization, error) {
 	return uc.eventRepo.GetUpcomingEvents()
+}
+
+// GetPopularEvents retrieves popular upcoming events
+// Events are considered popular if 70% or more of their tickets are sold
+func (uc *eventUseCase) GetPopularEvents() ([]*domain.EventWithOrganization, error) {
+	// 0.7 means 70% threshold - events with 70% or more tickets sold
+	return uc.eventRepo.GetPopularEvents(0.7)
 }
 
 // SearchEvents searches events by keyword

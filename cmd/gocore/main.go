@@ -54,6 +54,7 @@ func main() {
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authUseCase)
+	userHandler := handler.NewUserHandler(userUseCase)
 	orgHandler := handler.NewOrganizationHandler(orgUseCase)
 	eventHandler := handler.NewEventHandler(eventUseCase)
 
@@ -83,14 +84,13 @@ func main() {
 	auth.Post("/logout", authHandler.Logout)
 
 	// Protected routes (authentication required)
+	users := auth.Group("/users", authMiddleware.Authenticate)
+	users.Get("/me", authHandler.Me)
+	users.Put("/me", userHandler.UpdateProfile)
+	users.Get("/:id", userHandler.GetUserByID)
+	users.Post("/logout", authHandler.Logout)
+
 	api := app.Group("/api", authMiddleware.Authenticate)
-	api.Get("/me", authHandler.Me)
-	api.Post("/logout", authHandler.Logout)
-
-	// User routes
-	user := api.Group("/users")
-	_ = user // userHandler will be added later
-
 	// Organization routes
 	orgs := api.Group("/organizations")
 	orgs.Post("/", orgHandler.CreateOrganization)
@@ -119,9 +119,9 @@ func main() {
 	publicEvents := app.Group("/public/events")
 	publicEvents.Get("/", eventHandler.GetPublicEvents)
 	publicEvents.Get("/upcoming", eventHandler.GetUpcomingEvents)
+	publicEvents.Get("/popular", eventHandler.GetPopularEvents)
 	publicEvents.Get("/search", eventHandler.SearchEvents)
-
-	_ = userUseCase // Use it to avoid unused variable error
+	publicEvents.Get("/:id", eventHandler.GetPublicEvent)
 
 	log.Println("Server starting on :3000")
 	if err = app.Listen(":3000"); err != nil {

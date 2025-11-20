@@ -209,3 +209,8 @@ func (uc *AuthUseCase) ValidateAccessToken(token string) (*util.Claims, error) {
 
 	return claims, nil
 }
+
+// GetUserByID retrieves user by ID
+func (uc *AuthUseCase) GetUserByID(userID uuid.UUID) (*domain.User, error) {
+	return uc.userRepo.GetUserByID(userID)
+}

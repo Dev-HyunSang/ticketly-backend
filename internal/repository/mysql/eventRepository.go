@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/dev-hyunsang/ticketly-backend/internal/domain"
@@ -247,7 +248,49 @@ func (r *eventRepository) GetUpcomingEvents() ([]*domain.EventWithOrganization, 
 		return nil, fmt.Errorf("failed to get upcoming events: %w", err)
 	}
 
+	log.Println(events)
+
 	return r.mapEventsWithOrganization(events), nil
+}
+
+// GetPopularEvents retrieves popular upcoming events based on ticket sales
+// threshold is the minimum percentage of tickets sold (0.0 to 1.0)
+// For example, 0.7 means events with 70% or more tickets sold
+func (r *eventRepository) GetPopularEvents(threshold float64) ([]*domain.EventWithOrganization, error) {
+	ctx := context.Background()
+	now := time.Now()
+
+	// Get all upcoming public events
+	events, err := r.client.Event.
+		Query().
+		Where(
+			event.IsPublic(true),
+			event.StartTimeGT(now),
+			event.StatusIn(event.StatusPublished, event.StatusOngoing),
+			event.TotalTicketsGT(0), // Only events with tickets
+		).
+		WithOrganization().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get popular events: %w", err)
+	}
+
+	// Filter events based on ticket sales percentage
+	popularEvents := make([]*ent.Event, 0)
+	for _, evt := range events {
+		soldTickets := evt.TotalTickets - evt.AvailableTickets
+		salesPercentage := float64(soldTickets) / float64(evt.TotalTickets)
+
+		if salesPercentage >= threshold {
+			popularEvents = append(popularEvents, evt)
+		}
+	}
+
+	// Sort by sales percentage (highest first), then by start time
+	// We'll sort by sold tickets count as a proxy since we can't add calculated fields
+	// You can implement custom sorting if needed
+
+	return r.mapEventsWithOrganization(popularEvents), nil
 }
 
 // SearchEvents searches events by keyword in title or description

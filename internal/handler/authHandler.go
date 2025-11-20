@@ -114,10 +114,19 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 func (h *AuthHandler) Me(c *fiber.Ctx) error {
 	// Get user information from context (set by auth middleware)
 	userID := c.Locals("userID").(uuid.UUID)
-	email := c.Locals("email").(string)
+
+	// Get full user information from database
+	user, err := h.authUseCase.GetUserByID(userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "User not found",
+		})
+	}
+
+	// Remove password from response
+	user.Password = ""
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"user_id": userID,
-		"email":   email,
+		"user": user,
 	})
 }
