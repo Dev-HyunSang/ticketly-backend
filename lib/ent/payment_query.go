@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -13,62 +12,60 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/event"
-	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organization"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/payment"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/predicate"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/user"
 	"github.com/google/uuid"
 )
 
-// EventQuery is the builder for querying Event entities.
-type EventQuery struct {
+// PaymentQuery is the builder for querying Payment entities.
+type PaymentQuery struct {
 	config
-	ctx              *QueryContext
-	order            []event.OrderOption
-	inters           []Interceptor
-	predicates       []predicate.Event
-	withOrganization *OrganizationQuery
-	withCreator      *UserQuery
-	withPayments     *PaymentQuery
+	ctx        *QueryContext
+	order      []payment.OrderOption
+	inters     []Interceptor
+	predicates []predicate.Payment
+	withEvent  *EventQuery
+	withUser   *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the EventQuery builder.
-func (_q *EventQuery) Where(ps ...predicate.Event) *EventQuery {
+// Where adds a new predicate for the PaymentQuery builder.
+func (_q *PaymentQuery) Where(ps ...predicate.Payment) *PaymentQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *EventQuery) Limit(limit int) *EventQuery {
+func (_q *PaymentQuery) Limit(limit int) *PaymentQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *EventQuery) Offset(offset int) *EventQuery {
+func (_q *PaymentQuery) Offset(offset int) *PaymentQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *EventQuery) Unique(unique bool) *EventQuery {
+func (_q *PaymentQuery) Unique(unique bool) *PaymentQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *EventQuery) Order(o ...event.OrderOption) *EventQuery {
+func (_q *PaymentQuery) Order(o ...payment.OrderOption) *PaymentQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryOrganization chains the current query on the "organization" edge.
-func (_q *EventQuery) QueryOrganization() *OrganizationQuery {
-	query := (&OrganizationClient{config: _q.config}).Query()
+// QueryEvent chains the current query on the "event" edge.
+func (_q *PaymentQuery) QueryEvent() *EventQuery {
+	query := (&EventClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -78,9 +75,9 @@ func (_q *EventQuery) QueryOrganization() *OrganizationQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(event.Table, event.FieldID, selector),
-			sqlgraph.To(organization.Table, organization.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, event.OrganizationTable, event.OrganizationColumn),
+			sqlgraph.From(payment.Table, payment.FieldID, selector),
+			sqlgraph.To(event.Table, event.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, payment.EventTable, payment.EventColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -88,8 +85,8 @@ func (_q *EventQuery) QueryOrganization() *OrganizationQuery {
 	return query
 }
 
-// QueryCreator chains the current query on the "creator" edge.
-func (_q *EventQuery) QueryCreator() *UserQuery {
+// QueryUser chains the current query on the "user" edge.
+func (_q *PaymentQuery) QueryUser() *UserQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -100,9 +97,9 @@ func (_q *EventQuery) QueryCreator() *UserQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(event.Table, event.FieldID, selector),
+			sqlgraph.From(payment.Table, payment.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, event.CreatorTable, event.CreatorColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, payment.UserTable, payment.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -110,43 +107,21 @@ func (_q *EventQuery) QueryCreator() *UserQuery {
 	return query
 }
 
-// QueryPayments chains the current query on the "payments" edge.
-func (_q *EventQuery) QueryPayments() *PaymentQuery {
-	query := (&PaymentClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(event.Table, event.FieldID, selector),
-			sqlgraph.To(payment.Table, payment.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, event.PaymentsTable, event.PaymentsColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// First returns the first Event entity from the query.
-// Returns a *NotFoundError when no Event was found.
-func (_q *EventQuery) First(ctx context.Context) (*Event, error) {
+// First returns the first Payment entity from the query.
+// Returns a *NotFoundError when no Payment was found.
+func (_q *PaymentQuery) First(ctx context.Context) (*Payment, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{event.Label}
+		return nil, &NotFoundError{payment.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *EventQuery) FirstX(ctx context.Context) *Event {
+func (_q *PaymentQuery) FirstX(ctx context.Context) *Payment {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -154,22 +129,22 @@ func (_q *EventQuery) FirstX(ctx context.Context) *Event {
 	return node
 }
 
-// FirstID returns the first Event ID from the query.
-// Returns a *NotFoundError when no Event ID was found.
-func (_q *EventQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first Payment ID from the query.
+// Returns a *NotFoundError when no Payment ID was found.
+func (_q *PaymentQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{event.Label}
+		err = &NotFoundError{payment.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *EventQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (_q *PaymentQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -177,10 +152,10 @@ func (_q *EventQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single Event entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Event entity is found.
-// Returns a *NotFoundError when no Event entities are found.
-func (_q *EventQuery) Only(ctx context.Context) (*Event, error) {
+// Only returns a single Payment entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Payment entity is found.
+// Returns a *NotFoundError when no Payment entities are found.
+func (_q *PaymentQuery) Only(ctx context.Context) (*Payment, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -189,14 +164,14 @@ func (_q *EventQuery) Only(ctx context.Context) (*Event, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{event.Label}
+		return nil, &NotFoundError{payment.Label}
 	default:
-		return nil, &NotSingularError{event.Label}
+		return nil, &NotSingularError{payment.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *EventQuery) OnlyX(ctx context.Context) *Event {
+func (_q *PaymentQuery) OnlyX(ctx context.Context) *Payment {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -204,10 +179,10 @@ func (_q *EventQuery) OnlyX(ctx context.Context) *Event {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Event ID in the query.
-// Returns a *NotSingularError when more than one Event ID is found.
+// OnlyID is like Only, but returns the only Payment ID in the query.
+// Returns a *NotSingularError when more than one Payment ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *EventQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *PaymentQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -216,15 +191,15 @@ func (_q *EventQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{event.Label}
+		err = &NotFoundError{payment.Label}
 	default:
-		err = &NotSingularError{event.Label}
+		err = &NotSingularError{payment.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *EventQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (_q *PaymentQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -232,18 +207,18 @@ func (_q *EventQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of Events.
-func (_q *EventQuery) All(ctx context.Context) ([]*Event, error) {
+// All executes the query and returns a list of Payments.
+func (_q *PaymentQuery) All(ctx context.Context) ([]*Payment, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Event, *EventQuery]()
-	return withInterceptors[[]*Event](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*Payment, *PaymentQuery]()
+	return withInterceptors[[]*Payment](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *EventQuery) AllX(ctx context.Context) []*Event {
+func (_q *PaymentQuery) AllX(ctx context.Context) []*Payment {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -251,20 +226,20 @@ func (_q *EventQuery) AllX(ctx context.Context) []*Event {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Event IDs.
-func (_q *EventQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+// IDs executes the query and returns a list of Payment IDs.
+func (_q *PaymentQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(event.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(payment.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *EventQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (_q *PaymentQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -273,16 +248,16 @@ func (_q *EventQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (_q *EventQuery) Count(ctx context.Context) (int, error) {
+func (_q *PaymentQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*EventQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*PaymentQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *EventQuery) CountX(ctx context.Context) int {
+func (_q *PaymentQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -291,7 +266,7 @@ func (_q *EventQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *EventQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *PaymentQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -304,7 +279,7 @@ func (_q *EventQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *EventQuery) ExistX(ctx context.Context) bool {
+func (_q *PaymentQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -312,57 +287,45 @@ func (_q *EventQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the EventQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the PaymentQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *EventQuery) Clone() *EventQuery {
+func (_q *PaymentQuery) Clone() *PaymentQuery {
 	if _q == nil {
 		return nil
 	}
-	return &EventQuery{
-		config:           _q.config,
-		ctx:              _q.ctx.Clone(),
-		order:            append([]event.OrderOption{}, _q.order...),
-		inters:           append([]Interceptor{}, _q.inters...),
-		predicates:       append([]predicate.Event{}, _q.predicates...),
-		withOrganization: _q.withOrganization.Clone(),
-		withCreator:      _q.withCreator.Clone(),
-		withPayments:     _q.withPayments.Clone(),
+	return &PaymentQuery{
+		config:     _q.config,
+		ctx:        _q.ctx.Clone(),
+		order:      append([]payment.OrderOption{}, _q.order...),
+		inters:     append([]Interceptor{}, _q.inters...),
+		predicates: append([]predicate.Payment{}, _q.predicates...),
+		withEvent:  _q.withEvent.Clone(),
+		withUser:   _q.withUser.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithOrganization tells the query-builder to eager-load the nodes that are connected to
-// the "organization" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *EventQuery) WithOrganization(opts ...func(*OrganizationQuery)) *EventQuery {
-	query := (&OrganizationClient{config: _q.config}).Query()
+// WithEvent tells the query-builder to eager-load the nodes that are connected to
+// the "event" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PaymentQuery) WithEvent(opts ...func(*EventQuery)) *PaymentQuery {
+	query := (&EventClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withOrganization = query
+	_q.withEvent = query
 	return _q
 }
 
-// WithCreator tells the query-builder to eager-load the nodes that are connected to
-// the "creator" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *EventQuery) WithCreator(opts ...func(*UserQuery)) *EventQuery {
+// WithUser tells the query-builder to eager-load the nodes that are connected to
+// the "user" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PaymentQuery) WithUser(opts ...func(*UserQuery)) *PaymentQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withCreator = query
-	return _q
-}
-
-// WithPayments tells the query-builder to eager-load the nodes that are connected to
-// the "payments" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *EventQuery) WithPayments(opts ...func(*PaymentQuery)) *EventQuery {
-	query := (&PaymentClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withPayments = query
+	_q.withUser = query
 	return _q
 }
 
@@ -372,19 +335,19 @@ func (_q *EventQuery) WithPayments(opts ...func(*PaymentQuery)) *EventQuery {
 // Example:
 //
 //	var v []struct {
-//		OrganizationID uuid.UUID `json:"organization_id,omitempty"`
+//		EventID uuid.UUID `json:"event_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Event.Query().
-//		GroupBy(event.FieldOrganizationID).
+//	client.Payment.Query().
+//		GroupBy(payment.FieldEventID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *EventQuery) GroupBy(field string, fields ...string) *EventGroupBy {
+func (_q *PaymentQuery) GroupBy(field string, fields ...string) *PaymentGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &EventGroupBy{build: _q}
+	grbuild := &PaymentGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = event.Label
+	grbuild.label = payment.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -395,26 +358,26 @@ func (_q *EventQuery) GroupBy(field string, fields ...string) *EventGroupBy {
 // Example:
 //
 //	var v []struct {
-//		OrganizationID uuid.UUID `json:"organization_id,omitempty"`
+//		EventID uuid.UUID `json:"event_id,omitempty"`
 //	}
 //
-//	client.Event.Query().
-//		Select(event.FieldOrganizationID).
+//	client.Payment.Query().
+//		Select(payment.FieldEventID).
 //		Scan(ctx, &v)
-func (_q *EventQuery) Select(fields ...string) *EventSelect {
+func (_q *PaymentQuery) Select(fields ...string) *PaymentSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &EventSelect{EventQuery: _q}
-	sbuild.label = event.Label
+	sbuild := &PaymentSelect{PaymentQuery: _q}
+	sbuild.label = payment.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a EventSelect configured with the given aggregations.
-func (_q *EventQuery) Aggregate(fns ...AggregateFunc) *EventSelect {
+// Aggregate returns a PaymentSelect configured with the given aggregations.
+func (_q *PaymentQuery) Aggregate(fns ...AggregateFunc) *PaymentSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *EventQuery) prepareQuery(ctx context.Context) error {
+func (_q *PaymentQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -426,7 +389,7 @@ func (_q *EventQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !event.ValidColumn(f) {
+		if !payment.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -440,21 +403,20 @@ func (_q *EventQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *EventQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Event, error) {
+func (_q *PaymentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Payment, error) {
 	var (
-		nodes       = []*Event{}
+		nodes       = []*Payment{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
-			_q.withOrganization != nil,
-			_q.withCreator != nil,
-			_q.withPayments != nil,
+		loadedTypes = [2]bool{
+			_q.withEvent != nil,
+			_q.withUser != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Event).scanValues(nil, columns)
+		return (*Payment).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Event{config: _q.config}
+		node := &Payment{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -468,33 +430,26 @@ func (_q *EventQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Event,
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withOrganization; query != nil {
-		if err := _q.loadOrganization(ctx, query, nodes, nil,
-			func(n *Event, e *Organization) { n.Edges.Organization = e }); err != nil {
+	if query := _q.withEvent; query != nil {
+		if err := _q.loadEvent(ctx, query, nodes, nil,
+			func(n *Payment, e *Event) { n.Edges.Event = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := _q.withCreator; query != nil {
-		if err := _q.loadCreator(ctx, query, nodes, nil,
-			func(n *Event, e *User) { n.Edges.Creator = e }); err != nil {
-			return nil, err
-		}
-	}
-	if query := _q.withPayments; query != nil {
-		if err := _q.loadPayments(ctx, query, nodes,
-			func(n *Event) { n.Edges.Payments = []*Payment{} },
-			func(n *Event, e *Payment) { n.Edges.Payments = append(n.Edges.Payments, e) }); err != nil {
+	if query := _q.withUser; query != nil {
+		if err := _q.loadUser(ctx, query, nodes, nil,
+			func(n *Payment, e *User) { n.Edges.User = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *EventQuery) loadOrganization(ctx context.Context, query *OrganizationQuery, nodes []*Event, init func(*Event), assign func(*Event, *Organization)) error {
+func (_q *PaymentQuery) loadEvent(ctx context.Context, query *EventQuery, nodes []*Payment, init func(*Payment), assign func(*Payment, *Event)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Event)
+	nodeids := make(map[uuid.UUID][]*Payment)
 	for i := range nodes {
-		fk := nodes[i].OrganizationID
+		fk := nodes[i].EventID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -503,7 +458,7 @@ func (_q *EventQuery) loadOrganization(ctx context.Context, query *OrganizationQ
 	if len(ids) == 0 {
 		return nil
 	}
-	query.Where(organization.IDIn(ids...))
+	query.Where(event.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
@@ -511,7 +466,7 @@ func (_q *EventQuery) loadOrganization(ctx context.Context, query *OrganizationQ
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "organization_id" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "event_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -519,11 +474,11 @@ func (_q *EventQuery) loadOrganization(ctx context.Context, query *OrganizationQ
 	}
 	return nil
 }
-func (_q *EventQuery) loadCreator(ctx context.Context, query *UserQuery, nodes []*Event, init func(*Event), assign func(*Event, *User)) error {
+func (_q *PaymentQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Payment, init func(*Payment), assign func(*Payment, *User)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Event)
+	nodeids := make(map[uuid.UUID][]*Payment)
 	for i := range nodes {
-		fk := nodes[i].CreatedBy
+		fk := nodes[i].UserID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -540,7 +495,7 @@ func (_q *EventQuery) loadCreator(ctx context.Context, query *UserQuery, nodes [
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "created_by" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -548,38 +503,8 @@ func (_q *EventQuery) loadCreator(ctx context.Context, query *UserQuery, nodes [
 	}
 	return nil
 }
-func (_q *EventQuery) loadPayments(ctx context.Context, query *PaymentQuery, nodes []*Event, init func(*Event), assign func(*Event, *Payment)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uuid.UUID]*Event)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(payment.FieldEventID)
-	}
-	query.Where(predicate.Payment(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(event.PaymentsColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.EventID
-		node, ok := nodeids[fk]
-		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "event_id" returned %v for node %v`, fk, n.ID)
-		}
-		assign(node, n)
-	}
-	return nil
-}
 
-func (_q *EventQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *PaymentQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -588,8 +513,8 @@ func (_q *EventQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *EventQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(event.Table, event.Columns, sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID))
+func (_q *PaymentQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(payment.Table, payment.Columns, sqlgraph.NewFieldSpec(payment.FieldID, field.TypeUUID))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -598,17 +523,17 @@ func (_q *EventQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, event.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, payment.FieldID)
 		for i := range fields {
-			if fields[i] != event.FieldID {
+			if fields[i] != payment.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
-		if _q.withOrganization != nil {
-			_spec.Node.AddColumnOnce(event.FieldOrganizationID)
+		if _q.withEvent != nil {
+			_spec.Node.AddColumnOnce(payment.FieldEventID)
 		}
-		if _q.withCreator != nil {
-			_spec.Node.AddColumnOnce(event.FieldCreatedBy)
+		if _q.withUser != nil {
+			_spec.Node.AddColumnOnce(payment.FieldUserID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
@@ -634,12 +559,12 @@ func (_q *EventQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *EventQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *PaymentQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(event.Table)
+	t1 := builder.Table(payment.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = event.Columns
+		columns = payment.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -666,28 +591,28 @@ func (_q *EventQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// EventGroupBy is the group-by builder for Event entities.
-type EventGroupBy struct {
+// PaymentGroupBy is the group-by builder for Payment entities.
+type PaymentGroupBy struct {
 	selector
-	build *EventQuery
+	build *PaymentQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *EventGroupBy) Aggregate(fns ...AggregateFunc) *EventGroupBy {
+func (_g *PaymentGroupBy) Aggregate(fns ...AggregateFunc) *PaymentGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *EventGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *PaymentGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*EventQuery, *EventGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*PaymentQuery, *PaymentGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *EventGroupBy) sqlScan(ctx context.Context, root *EventQuery, v any) error {
+func (_g *PaymentGroupBy) sqlScan(ctx context.Context, root *PaymentQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -714,28 +639,28 @@ func (_g *EventGroupBy) sqlScan(ctx context.Context, root *EventQuery, v any) er
 	return sql.ScanSlice(rows, v)
 }
 
-// EventSelect is the builder for selecting fields of Event entities.
-type EventSelect struct {
-	*EventQuery
+// PaymentSelect is the builder for selecting fields of Payment entities.
+type PaymentSelect struct {
+	*PaymentQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *EventSelect) Aggregate(fns ...AggregateFunc) *EventSelect {
+func (_s *PaymentSelect) Aggregate(fns ...AggregateFunc) *PaymentSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *EventSelect) Scan(ctx context.Context, v any) error {
+func (_s *PaymentSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*EventQuery, *EventSelect](ctx, _s.EventQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*PaymentQuery, *PaymentSelect](ctx, _s.PaymentQuery, _s, _s.inters, v)
 }
 
-func (_s *EventSelect) sqlScan(ctx context.Context, root *EventQuery, v any) error {
+func (_s *PaymentSelect) sqlScan(ctx context.Context, root *PaymentQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

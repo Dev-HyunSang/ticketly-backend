@@ -15,6 +15,7 @@ import (
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/event"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organization"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organizationmember"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/payment"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/user"
 )
 
@@ -79,6 +80,7 @@ func checkColumn(t, c string) error {
 			event.Table:              event.ValidColumn,
 			organization.Table:       organization.ValidColumn,
 			organizationmember.Table: organizationmember.ValidColumn,
+			payment.Table:            payment.ValidColumn,
 			user.Table:               user.ValidColumn,
 		})
 	})

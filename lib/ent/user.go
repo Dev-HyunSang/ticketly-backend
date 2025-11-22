@@ -52,9 +52,11 @@ type UserEdges struct {
 	Memberships []*OrganizationMember `json:"memberships,omitempty"`
 	// CreatedEvents holds the value of the created_events edge.
 	CreatedEvents []*Event `json:"created_events,omitempty"`
+	// Payments holds the value of the payments edge.
+	Payments []*Payment `json:"payments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // OwnedOrganizationsOrErr returns the OwnedOrganizations value or an error if the edge
@@ -82,6 +84,15 @@ func (e UserEdges) CreatedEventsOrErr() ([]*Event, error) {
 		return e.CreatedEvents, nil
 	}
 	return nil, &NotLoadedError{edge: "created_events"}
+}
+
+// PaymentsOrErr returns the Payments value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) PaymentsOrErr() ([]*Payment, error) {
+	if e.loadedTypes[3] {
+		return e.Payments, nil
+	}
+	return nil, &NotLoadedError{edge: "payments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -204,6 +215,11 @@ func (_m *User) QueryMemberships() *OrganizationMemberQuery {
 // QueryCreatedEvents queries the "created_events" edge of the User entity.
 func (_m *User) QueryCreatedEvents() *EventQuery {
 	return NewUserClient(_m.config).QueryCreatedEvents(_m)
+}
+
+// QueryPayments queries the "payments" edge of the User entity.
+func (_m *User) QueryPayments() *PaymentQuery {
+	return NewUserClient(_m.config).QueryPayments(_m)
 }
 
 // Update returns a builder for updating this User.

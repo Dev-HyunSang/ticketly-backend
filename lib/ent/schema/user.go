@@ -42,5 +42,6 @@ func (User) Edges() []ent.Edge {
 		edge.To("owned_organizations", Organization.Type),
 		edge.To("memberships", OrganizationMember.Type),
 		edge.To("created_events", Event.Type),
+		edge.To("payments", Payment.Type),
 	}
 }

@@ -18,6 +18,8 @@ type Tx struct {
 	Organization *OrganizationClient
 	// OrganizationMember is the client for interacting with the OrganizationMember builders.
 	OrganizationMember *OrganizationMemberClient
+	// Payment is the client for interacting with the Payment builders.
+	Payment *PaymentClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -154,6 +156,7 @@ func (tx *Tx) init() {
 	tx.Event = NewEventClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.OrganizationMember = NewOrganizationMemberClient(tx.config)
+	tx.Payment = NewPaymentClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

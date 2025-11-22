@@ -962,6 +962,29 @@ func HasCreatorWith(preds ...predicate.User) predicate.Event {
 	})
 }
 
+// HasPayments applies the HasEdge predicate on the "payments" edge.
+func HasPayments() predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PaymentsTable, PaymentsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPaymentsWith applies the HasEdge predicate on the "payments" edge with a given conditions (other predicates).
+func HasPaymentsWith(preds ...predicate.Payment) predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := newPaymentsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Event) predicate.Event {
 	return predicate.Event(sql.AndPredicates(predicates...))

@@ -13,6 +13,7 @@ import (
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/event"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organization"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organizationmember"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/payment"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/user"
 	"github.com/google/uuid"
 )
@@ -165,6 +166,21 @@ func (_c *UserCreate) AddCreatedEvents(v ...*Event) *UserCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddCreatedEventIDs(ids...)
+}
+
+// AddPaymentIDs adds the "payments" edge to the Payment entity by IDs.
+func (_c *UserCreate) AddPaymentIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddPaymentIDs(ids...)
+	return _c
+}
+
+// AddPayments adds the "payments" edges to the Payment entity.
+func (_c *UserCreate) AddPayments(v ...*Payment) *UserCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddPaymentIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -368,6 +384,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.PaymentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PaymentsTable,
+			Columns: []string{user.PaymentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(payment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

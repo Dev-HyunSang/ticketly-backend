@@ -66,9 +66,11 @@ type EventEdges struct {
 	Organization *Organization `json:"organization,omitempty"`
 	// Creator holds the value of the creator edge.
 	Creator *User `json:"creator,omitempty"`
+	// Payments holds the value of the payments edge.
+	Payments []*Payment `json:"payments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // OrganizationOrErr returns the Organization value or an error if the edge
@@ -91,6 +93,15 @@ func (e EventEdges) CreatorOrErr() (*User, error) {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "creator"}
+}
+
+// PaymentsOrErr returns the Payments value or an error if the edge
+// was not loaded in eager-loading.
+func (e EventEdges) PaymentsOrErr() ([]*Payment, error) {
+	if e.loadedTypes[2] {
+		return e.Payments, nil
+	}
+	return nil, &NotLoadedError{edge: "payments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -254,6 +265,11 @@ func (_m *Event) QueryOrganization() *OrganizationQuery {
 // QueryCreator queries the "creator" edge of the Event entity.
 func (_m *Event) QueryCreator() *UserQuery {
 	return NewEventClient(_m.config).QueryCreator(_m)
+}
+
+// QueryPayments queries the "payments" edge of the Event entity.
+func (_m *Event) QueryPayments() *PaymentQuery {
+	return NewEventClient(_m.config).QueryPayments(_m)
 }
 
 // Update returns a builder for updating this Event.

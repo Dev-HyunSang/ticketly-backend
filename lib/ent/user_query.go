@@ -15,6 +15,7 @@ import (
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/event"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organization"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organizationmember"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/payment"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/predicate"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/user"
 	"github.com/google/uuid"
@@ -30,6 +31,7 @@ type UserQuery struct {
 	withOwnedOrganizations *OrganizationQuery
 	withMemberships        *OrganizationMemberQuery
 	withCreatedEvents      *EventQuery
+	withPayments           *PaymentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -125,6 +127,28 @@ func (_q *UserQuery) QueryCreatedEvents() *EventQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(event.Table, event.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.CreatedEventsTable, user.CreatedEventsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryPayments chains the current query on the "payments" edge.
+func (_q *UserQuery) QueryPayments() *PaymentQuery {
+	query := (&PaymentClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(payment.Table, payment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PaymentsTable, user.PaymentsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -327,6 +351,7 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withOwnedOrganizations: _q.withOwnedOrganizations.Clone(),
 		withMemberships:        _q.withMemberships.Clone(),
 		withCreatedEvents:      _q.withCreatedEvents.Clone(),
+		withPayments:           _q.withPayments.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -363,6 +388,17 @@ func (_q *UserQuery) WithCreatedEvents(opts ...func(*EventQuery)) *UserQuery {
 		opt(query)
 	}
 	_q.withCreatedEvents = query
+	return _q
+}
+
+// WithPayments tells the query-builder to eager-load the nodes that are connected to
+// the "payments" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithPayments(opts ...func(*PaymentQuery)) *UserQuery {
+	query := (&PaymentClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withPayments = query
 	return _q
 }
 
@@ -444,10 +480,11 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			_q.withOwnedOrganizations != nil,
 			_q.withMemberships != nil,
 			_q.withCreatedEvents != nil,
+			_q.withPayments != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -486,6 +523,13 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := _q.loadCreatedEvents(ctx, query, nodes,
 			func(n *User) { n.Edges.CreatedEvents = []*Event{} },
 			func(n *User, e *Event) { n.Edges.CreatedEvents = append(n.Edges.CreatedEvents, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withPayments; query != nil {
+		if err := _q.loadPayments(ctx, query, nodes,
+			func(n *User) { n.Edges.Payments = []*Payment{} },
+			func(n *User, e *Payment) { n.Edges.Payments = append(n.Edges.Payments, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -577,6 +621,36 @@ func (_q *UserQuery) loadCreatedEvents(ctx context.Context, query *EventQuery, n
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "created_by" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadPayments(ctx context.Context, query *PaymentQuery, nodes []*User, init func(*User), assign func(*User, *Payment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(payment.FieldUserID)
+	}
+	query.Where(predicate.Payment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.PaymentsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

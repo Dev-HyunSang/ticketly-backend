@@ -42,6 +42,7 @@ func main() {
 	tokenRepo := redis.NewTokenRepository(redisClient)
 	orgRepo := mysql.NewOrganizationRepository(client)
 	eventRepo := mysql.NewEventRepository(client)
+	paymentRepo := mysql.NewPaymentRepository(client)
 
 	// Initialize utilities
 	jwtUtil := util.NewJWTUtil()
@@ -51,12 +52,14 @@ func main() {
 	authUseCase := usecase.NewAuthUseCase(userRepo, tokenRepo, jwtUtil)
 	orgUseCase := usecase.NewOrganizationUseCase(orgRepo)
 	eventUseCase := usecase.NewEventUseCase(eventRepo, orgRepo)
+	paymentUseCase := usecase.NewPaymentUseCase(paymentRepo, eventRepo)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authUseCase)
 	userHandler := handler.NewUserHandler(userUseCase)
 	orgHandler := handler.NewOrganizationHandler(orgUseCase)
 	eventHandler := handler.NewEventHandler(eventUseCase)
+	paymentHandler := handler.NewPaymentHandler(paymentUseCase)
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(authUseCase)
@@ -91,6 +94,7 @@ func main() {
 	users.Post("/logout", authHandler.Logout)
 
 	api := app.Group("/api", authMiddleware.Authenticate)
+
 	// Organization routes
 	orgs := api.Group("/organizations")
 	orgs.Post("/", orgHandler.CreateOrganization)
@@ -114,6 +118,16 @@ func main() {
 	events.Get("/:id", eventHandler.GetEvent)
 	events.Put("/:id", eventHandler.UpdateEvent)
 	events.Delete("/:id", eventHandler.DeleteEvent)
+	events.Post("/payment", eventHandler.ConfirmPayment)
+	events.Get("/:eventId/payments", paymentHandler.GetEventPayments)
+
+	// Payment routes
+	payments := api.Group("/payments")
+	payments.Post("/", paymentHandler.CreatePayment)
+	payments.Get("/my", paymentHandler.GetMyPayments)
+	payments.Get("/:id", paymentHandler.GetPayment)
+	payments.Get("/order/:orderId", paymentHandler.GetPaymentByOrderID)
+	payments.Post("/complete", paymentHandler.CompletePayment)
 
 	// Public event routes (no authentication)
 	publicEvents := app.Group("/public/events")

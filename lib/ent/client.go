@@ -19,6 +19,7 @@ import (
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/event"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organization"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organizationmember"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/payment"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/user"
 )
 
@@ -33,6 +34,8 @@ type Client struct {
 	Organization *OrganizationClient
 	// OrganizationMember is the client for interacting with the OrganizationMember builders.
 	OrganizationMember *OrganizationMemberClient
+	// Payment is the client for interacting with the Payment builders.
+	Payment *PaymentClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -49,6 +52,7 @@ func (c *Client) init() {
 	c.Event = NewEventClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
 	c.OrganizationMember = NewOrganizationMemberClient(c.config)
+	c.Payment = NewPaymentClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -145,6 +149,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Event:              NewEventClient(cfg),
 		Organization:       NewOrganizationClient(cfg),
 		OrganizationMember: NewOrganizationMemberClient(cfg),
+		Payment:            NewPaymentClient(cfg),
 		User:               NewUserClient(cfg),
 	}, nil
 }
@@ -168,6 +173,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Event:              NewEventClient(cfg),
 		Organization:       NewOrganizationClient(cfg),
 		OrganizationMember: NewOrganizationMemberClient(cfg),
+		Payment:            NewPaymentClient(cfg),
 		User:               NewUserClient(cfg),
 	}, nil
 }
@@ -200,6 +206,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Event.Use(hooks...)
 	c.Organization.Use(hooks...)
 	c.OrganizationMember.Use(hooks...)
+	c.Payment.Use(hooks...)
 	c.User.Use(hooks...)
 }
 
@@ -209,6 +216,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Event.Intercept(interceptors...)
 	c.Organization.Intercept(interceptors...)
 	c.OrganizationMember.Intercept(interceptors...)
+	c.Payment.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
 
@@ -221,6 +229,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Organization.mutate(ctx, m)
 	case *OrganizationMemberMutation:
 		return c.OrganizationMember.mutate(ctx, m)
+	case *PaymentMutation:
+		return c.Payment.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -361,6 +371,22 @@ func (c *EventClient) QueryCreator(_m *Event) *UserQuery {
 			sqlgraph.From(event.Table, event.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, event.CreatorTable, event.CreatorColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPayments queries the payments edge of a Event.
+func (c *EventClient) QueryPayments(_m *Event) *PaymentQuery {
+	query := (&PaymentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(event.Table, event.FieldID, id),
+			sqlgraph.To(payment.Table, payment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, event.PaymentsTable, event.PaymentsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -739,6 +765,171 @@ func (c *OrganizationMemberClient) mutate(ctx context.Context, m *OrganizationMe
 	}
 }
 
+// PaymentClient is a client for the Payment schema.
+type PaymentClient struct {
+	config
+}
+
+// NewPaymentClient returns a client for the Payment from the given config.
+func NewPaymentClient(c config) *PaymentClient {
+	return &PaymentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `payment.Hooks(f(g(h())))`.
+func (c *PaymentClient) Use(hooks ...Hook) {
+	c.hooks.Payment = append(c.hooks.Payment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `payment.Intercept(f(g(h())))`.
+func (c *PaymentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Payment = append(c.inters.Payment, interceptors...)
+}
+
+// Create returns a builder for creating a Payment entity.
+func (c *PaymentClient) Create() *PaymentCreate {
+	mutation := newPaymentMutation(c.config, OpCreate)
+	return &PaymentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Payment entities.
+func (c *PaymentClient) CreateBulk(builders ...*PaymentCreate) *PaymentCreateBulk {
+	return &PaymentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PaymentClient) MapCreateBulk(slice any, setFunc func(*PaymentCreate, int)) *PaymentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PaymentCreateBulk{err: fmt.Errorf("calling to PaymentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PaymentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PaymentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Payment.
+func (c *PaymentClient) Update() *PaymentUpdate {
+	mutation := newPaymentMutation(c.config, OpUpdate)
+	return &PaymentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PaymentClient) UpdateOne(_m *Payment) *PaymentUpdateOne {
+	mutation := newPaymentMutation(c.config, OpUpdateOne, withPayment(_m))
+	return &PaymentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PaymentClient) UpdateOneID(id uuid.UUID) *PaymentUpdateOne {
+	mutation := newPaymentMutation(c.config, OpUpdateOne, withPaymentID(id))
+	return &PaymentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Payment.
+func (c *PaymentClient) Delete() *PaymentDelete {
+	mutation := newPaymentMutation(c.config, OpDelete)
+	return &PaymentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PaymentClient) DeleteOne(_m *Payment) *PaymentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PaymentClient) DeleteOneID(id uuid.UUID) *PaymentDeleteOne {
+	builder := c.Delete().Where(payment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PaymentDeleteOne{builder}
+}
+
+// Query returns a query builder for Payment.
+func (c *PaymentClient) Query() *PaymentQuery {
+	return &PaymentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePayment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Payment entity by its id.
+func (c *PaymentClient) Get(ctx context.Context, id uuid.UUID) (*Payment, error) {
+	return c.Query().Where(payment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PaymentClient) GetX(ctx context.Context, id uuid.UUID) *Payment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEvent queries the event edge of a Payment.
+func (c *PaymentClient) QueryEvent(_m *Payment) *EventQuery {
+	query := (&EventClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(payment.Table, payment.FieldID, id),
+			sqlgraph.To(event.Table, event.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, payment.EventTable, payment.EventColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a Payment.
+func (c *PaymentClient) QueryUser(_m *Payment) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(payment.Table, payment.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, payment.UserTable, payment.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *PaymentClient) Hooks() []Hook {
+	return c.hooks.Payment
+}
+
+// Interceptors returns the client interceptors.
+func (c *PaymentClient) Interceptors() []Interceptor {
+	return c.inters.Payment
+}
+
+func (c *PaymentClient) mutate(ctx context.Context, m *PaymentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PaymentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PaymentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PaymentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PaymentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Payment mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -895,6 +1086,22 @@ func (c *UserClient) QueryCreatedEvents(_m *User) *EventQuery {
 	return query
 }
 
+// QueryPayments queries the payments edge of a User.
+func (c *UserClient) QueryPayments(_m *User) *PaymentQuery {
+	query := (&PaymentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(payment.Table, payment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PaymentsTable, user.PaymentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -923,9 +1130,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Event, Organization, OrganizationMember, User []ent.Hook
+		Event, Organization, OrganizationMember, Payment, User []ent.Hook
 	}
 	inters struct {
-		Event, Organization, OrganizationMember, User []ent.Interceptor
+		Event, Organization, OrganizationMember, Payment, User []ent.Interceptor
 	}
 )

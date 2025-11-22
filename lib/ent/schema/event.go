@@ -88,5 +88,6 @@ func (Event) Edges() []ent.Edge {
 			Field("created_by").
 			Required().
 			Unique(),
+		edge.To("payments", Payment.Type),
 	}
 }

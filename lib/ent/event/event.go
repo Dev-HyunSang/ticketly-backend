@@ -54,6 +54,8 @@ const (
 	EdgeOrganization = "organization"
 	// EdgeCreator holds the string denoting the creator edge name in mutations.
 	EdgeCreator = "creator"
+	// EdgePayments holds the string denoting the payments edge name in mutations.
+	EdgePayments = "payments"
 	// Table holds the table name of the event in the database.
 	Table = "events"
 	// OrganizationTable is the table that holds the organization relation/edge.
@@ -70,6 +72,13 @@ const (
 	CreatorInverseTable = "users"
 	// CreatorColumn is the table column denoting the creator relation/edge.
 	CreatorColumn = "created_by"
+	// PaymentsTable is the table that holds the payments relation/edge.
+	PaymentsTable = "payments"
+	// PaymentsInverseTable is the table name for the Payment entity.
+	// It exists in this package in order to avoid circular dependency with the "payment" package.
+	PaymentsInverseTable = "payments"
+	// PaymentsColumn is the table column denoting the payments relation/edge.
+	PaymentsColumn = "event_id"
 )
 
 // Columns holds all SQL columns for event fields.
@@ -268,6 +277,20 @@ func ByCreatorField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newCreatorStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByPaymentsCount orders the results by payments count.
+func ByPaymentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPaymentsStep(), opts...)
+	}
+}
+
+// ByPayments orders the results by payments terms.
+func ByPayments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPaymentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newOrganizationStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -280,5 +303,12 @@ func newCreatorStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CreatorInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, CreatorTable, CreatorColumn),
+	)
+}
+func newPaymentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PaymentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, PaymentsTable, PaymentsColumn),
 	)
 }

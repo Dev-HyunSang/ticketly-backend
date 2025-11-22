@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/event"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organization"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/payment"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/predicate"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/user"
 	"github.com/google/uuid"
@@ -308,6 +309,21 @@ func (_u *EventUpdate) SetCreator(v *User) *EventUpdate {
 	return _u.SetCreatorID(v.ID)
 }
 
+// AddPaymentIDs adds the "payments" edge to the Payment entity by IDs.
+func (_u *EventUpdate) AddPaymentIDs(ids ...uuid.UUID) *EventUpdate {
+	_u.mutation.AddPaymentIDs(ids...)
+	return _u
+}
+
+// AddPayments adds the "payments" edges to the Payment entity.
+func (_u *EventUpdate) AddPayments(v ...*Payment) *EventUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPaymentIDs(ids...)
+}
+
 // Mutation returns the EventMutation object of the builder.
 func (_u *EventUpdate) Mutation() *EventMutation {
 	return _u.mutation
@@ -323,6 +339,27 @@ func (_u *EventUpdate) ClearOrganization() *EventUpdate {
 func (_u *EventUpdate) ClearCreator() *EventUpdate {
 	_u.mutation.ClearCreator()
 	return _u
+}
+
+// ClearPayments clears all "payments" edges to the Payment entity.
+func (_u *EventUpdate) ClearPayments() *EventUpdate {
+	_u.mutation.ClearPayments()
+	return _u
+}
+
+// RemovePaymentIDs removes the "payments" edge to Payment entities by IDs.
+func (_u *EventUpdate) RemovePaymentIDs(ids ...uuid.UUID) *EventUpdate {
+	_u.mutation.RemovePaymentIDs(ids...)
+	return _u
+}
+
+// RemovePayments removes "payments" edges to Payment entities.
+func (_u *EventUpdate) RemovePayments(v ...*Payment) *EventUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePaymentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -523,6 +560,51 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PaymentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   event.PaymentsTable,
+			Columns: []string{event.PaymentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(payment.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPaymentsIDs(); len(nodes) > 0 && !_u.mutation.PaymentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   event.PaymentsTable,
+			Columns: []string{event.PaymentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(payment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PaymentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   event.PaymentsTable,
+			Columns: []string{event.PaymentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(payment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -827,6 +909,21 @@ func (_u *EventUpdateOne) SetCreator(v *User) *EventUpdateOne {
 	return _u.SetCreatorID(v.ID)
 }
 
+// AddPaymentIDs adds the "payments" edge to the Payment entity by IDs.
+func (_u *EventUpdateOne) AddPaymentIDs(ids ...uuid.UUID) *EventUpdateOne {
+	_u.mutation.AddPaymentIDs(ids...)
+	return _u
+}
+
+// AddPayments adds the "payments" edges to the Payment entity.
+func (_u *EventUpdateOne) AddPayments(v ...*Payment) *EventUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPaymentIDs(ids...)
+}
+
 // Mutation returns the EventMutation object of the builder.
 func (_u *EventUpdateOne) Mutation() *EventMutation {
 	return _u.mutation
@@ -842,6 +939,27 @@ func (_u *EventUpdateOne) ClearOrganization() *EventUpdateOne {
 func (_u *EventUpdateOne) ClearCreator() *EventUpdateOne {
 	_u.mutation.ClearCreator()
 	return _u
+}
+
+// ClearPayments clears all "payments" edges to the Payment entity.
+func (_u *EventUpdateOne) ClearPayments() *EventUpdateOne {
+	_u.mutation.ClearPayments()
+	return _u
+}
+
+// RemovePaymentIDs removes the "payments" edge to Payment entities by IDs.
+func (_u *EventUpdateOne) RemovePaymentIDs(ids ...uuid.UUID) *EventUpdateOne {
+	_u.mutation.RemovePaymentIDs(ids...)
+	return _u
+}
+
+// RemovePayments removes "payments" edges to Payment entities.
+func (_u *EventUpdateOne) RemovePayments(v ...*Payment) *EventUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePaymentIDs(ids...)
 }
 
 // Where appends a list predicates to the EventUpdate builder.
@@ -1072,6 +1190,51 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PaymentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   event.PaymentsTable,
+			Columns: []string{event.PaymentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(payment.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPaymentsIDs(); len(nodes) > 0 && !_u.mutation.PaymentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   event.PaymentsTable,
+			Columns: []string{event.PaymentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(payment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PaymentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   event.PaymentsTable,
+			Columns: []string{event.PaymentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(payment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

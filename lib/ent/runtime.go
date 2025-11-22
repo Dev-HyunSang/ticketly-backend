@@ -8,6 +8,7 @@ import (
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/event"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organization"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/organizationmember"
+	"github.com/dev-hyunsang/ticketly-backend/lib/ent/payment"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/schema"
 	"github.com/dev-hyunsang/ticketly-backend/lib/ent/user"
 	"github.com/google/uuid"
@@ -107,6 +108,50 @@ func init() {
 	organizationmemberDescID := organizationmemberFields[0].Descriptor()
 	// organizationmember.DefaultID holds the default value on creation for the id field.
 	organizationmember.DefaultID = organizationmemberDescID.Default.(func() uuid.UUID)
+	paymentFields := schema.Payment{}.Fields()
+	_ = paymentFields
+	// paymentDescEventTitle is the schema descriptor for event_title field.
+	paymentDescEventTitle := paymentFields[3].Descriptor()
+	// payment.EventTitleValidator is a validator for the "event_title" field. It is called by the builders before save.
+	payment.EventTitleValidator = paymentDescEventTitle.Validators[0].(func(string) error)
+	// paymentDescTicketQuantity is the schema descriptor for ticket_quantity field.
+	paymentDescTicketQuantity := paymentFields[4].Descriptor()
+	// payment.TicketQuantityValidator is a validator for the "ticket_quantity" field. It is called by the builders before save.
+	payment.TicketQuantityValidator = paymentDescTicketQuantity.Validators[0].(func(int) error)
+	// paymentDescTotalPrice is the schema descriptor for total_price field.
+	paymentDescTotalPrice := paymentFields[5].Descriptor()
+	// payment.TotalPriceValidator is a validator for the "total_price" field. It is called by the builders before save.
+	payment.TotalPriceValidator = paymentDescTotalPrice.Validators[0].(func(float64) error)
+	// paymentDescCurrency is the schema descriptor for currency field.
+	paymentDescCurrency := paymentFields[6].Descriptor()
+	// payment.DefaultCurrency holds the default value on creation for the currency field.
+	payment.DefaultCurrency = paymentDescCurrency.Default.(string)
+	// paymentDescBuyerName is the schema descriptor for buyer_name field.
+	paymentDescBuyerName := paymentFields[7].Descriptor()
+	// payment.BuyerNameValidator is a validator for the "buyer_name" field. It is called by the builders before save.
+	payment.BuyerNameValidator = paymentDescBuyerName.Validators[0].(func(string) error)
+	// paymentDescBuyerEmail is the schema descriptor for buyer_email field.
+	paymentDescBuyerEmail := paymentFields[8].Descriptor()
+	// payment.BuyerEmailValidator is a validator for the "buyer_email" field. It is called by the builders before save.
+	payment.BuyerEmailValidator = paymentDescBuyerEmail.Validators[0].(func(string) error)
+	// paymentDescBuyerPhone is the schema descriptor for buyer_phone field.
+	paymentDescBuyerPhone := paymentFields[9].Descriptor()
+	// payment.BuyerPhoneValidator is a validator for the "buyer_phone" field. It is called by the builders before save.
+	payment.BuyerPhoneValidator = paymentDescBuyerPhone.Validators[0].(func(string) error)
+	// paymentDescCreatedAt is the schema descriptor for created_at field.
+	paymentDescCreatedAt := paymentFields[13].Descriptor()
+	// payment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	payment.DefaultCreatedAt = paymentDescCreatedAt.Default.(func() time.Time)
+	// paymentDescUpdatedAt is the schema descriptor for updated_at field.
+	paymentDescUpdatedAt := paymentFields[14].Descriptor()
+	// payment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	payment.DefaultUpdatedAt = paymentDescUpdatedAt.Default.(func() time.Time)
+	// payment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	payment.UpdateDefaultUpdatedAt = paymentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// paymentDescID is the schema descriptor for id field.
+	paymentDescID := paymentFields[0].Descriptor()
+	// payment.DefaultID holds the default value on creation for the id field.
+	payment.DefaultID = paymentDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescIsValid is the schema descriptor for is_valid field.

@@ -104,6 +104,44 @@ var (
 			},
 		},
 	}
+	// PaymentsColumns holds the columns for the "payments" table.
+	PaymentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "event_title", Type: field.TypeString},
+		{Name: "ticket_quantity", Type: field.TypeInt},
+		{Name: "total_price", Type: field.TypeFloat64},
+		{Name: "currency", Type: field.TypeString, Default: "KRW"},
+		{Name: "buyer_name", Type: field.TypeString},
+		{Name: "buyer_email", Type: field.TypeString},
+		{Name: "buyer_phone", Type: field.TypeString},
+		{Name: "payment_key", Type: field.TypeString, Nullable: true},
+		{Name: "order_id", Type: field.TypeString, Unique: true, Nullable: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "completed", "failed", "cancelled", "refunded"}, Default: "pending"},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "event_id", Type: field.TypeUUID},
+		{Name: "user_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// PaymentsTable holds the schema information for the "payments" table.
+	PaymentsTable = &schema.Table{
+		Name:       "payments",
+		Columns:    PaymentsColumns,
+		PrimaryKey: []*schema.Column{PaymentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "payments_events_payments",
+				Columns:    []*schema.Column{PaymentsColumns[13]},
+				RefColumns: []*schema.Column{EventsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "payments_users_payments",
+				Columns:    []*schema.Column{PaymentsColumns[14]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -129,6 +167,7 @@ var (
 		EventsTable,
 		OrganizationsTable,
 		OrganizationMembersTable,
+		PaymentsTable,
 		UsersTable,
 	}
 )
@@ -139,4 +178,6 @@ func init() {
 	OrganizationsTable.ForeignKeys[0].RefTable = UsersTable
 	OrganizationMembersTable.ForeignKeys[0].RefTable = OrganizationsTable
 	OrganizationMembersTable.ForeignKeys[1].RefTable = UsersTable
+	PaymentsTable.ForeignKeys[0].RefTable = EventsTable
+	PaymentsTable.ForeignKeys[1].RefTable = UsersTable
 }
