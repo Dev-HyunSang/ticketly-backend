@@ -9,9 +9,16 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/dev-hyunsang/ticketly-backend/config"
 	"github.com/dev-hyunsang/ticketly-backend/internal/usecase"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+)
+
+var (
+	TOSS_SECRET_KEY      string = "Basic " + base64.StdEncoding.EncodeToString([]byte(config.Getenv("TOSS_PG_SECRET_KEY")+":"))
+	TOSS_CONFIRM_API_URL string = "https://api.tosspayments.com/v1/payments/confirm"
+	TOSS_PAYMENT_API_URL string = "https://api.tosspayments.com/v1/payments/"
 )
 
 type EventHandler struct {
@@ -20,6 +27,12 @@ type EventHandler struct {
 
 type BuyEventTicket struct {
 	EventID uuid.UUID `json:event_id`
+}
+
+type ConfirmReqBody struct {
+	PaymentKey string `json:"paymentKey"`
+	OrderId    string `json:"orderId"`
+	Amount     int    `json:"amount"`
 }
 
 func NewEventHandler(eventUseCase usecase.EventUseCase) *EventHandler {
@@ -326,6 +339,5 @@ func (h *EventHandler) BuyEvents(c *fiber.Ctx) error {
 
 	log.Println(result)
 
-	// ConfirmPayment()
 	return nil
 }
