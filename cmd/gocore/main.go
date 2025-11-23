@@ -118,7 +118,6 @@ func main() {
 	events.Get("/:id", eventHandler.GetEvent)
 	events.Put("/:id", eventHandler.UpdateEvent)
 	events.Delete("/:id", eventHandler.DeleteEvent)
-	events.Post("/payment", eventHandler.ConfirmPayment)
 	events.Get("/:eventId/payments", paymentHandler.GetEventPayments)
 
 	// Payment routes
