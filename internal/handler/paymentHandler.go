@@ -155,25 +155,42 @@ func (h *PaymentHandler) CompletePayment(c *fiber.Ctx) error {
 	var req CompleteRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
+			"error": "잘못된 요청 형식입니다.",
 		})
 	}
 
 	if req.OrderID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Order ID is required",
+			"error": "주문 ID는 필수입니다.",
 		})
 	}
 
 	payment, err := h.paymentUseCase.CompletePayment(req.OrderID, req.PaymentKey)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+		// Check error type and return appropriate Korean message
+		errMsg := err.Error()
+		var statusCode int
+		var message string
+
+		switch errMsg {
+		case "payment not found: 해당 정보를 찾을 수 없습니다.":
+			statusCode = fiber.StatusNotFound
+			message = "해당 주문 정보를 찾을 수 없습니다."
+		case "payment is not in pending status":
+			statusCode = fiber.StatusBadRequest
+			message = "이미 처리된 결제입니다."
+		default:
+			statusCode = fiber.StatusBadRequest
+			message = errMsg
+		}
+
+		return c.Status(statusCode).JSON(fiber.Map{
+			"error": message,
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Payment completed successfully",
+		"message": "결제가 성공적으로 완료되었습니다.",
 		"payment": payment,
 	})
 }

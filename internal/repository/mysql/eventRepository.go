@@ -319,18 +319,37 @@ func (r *eventRepository) SearchEvents(keyword string) ([]*domain.EventWithOrgan
 	return r.mapEventsWithOrganization(events), nil
 }
 
-// UpdateAvailableTickets updates the available tickets count
-func (r *eventRepository) UpdateAvailableTickets(eventID uuid.UUID, tickets int) error {
+// UpdateAvailableTickets updates the available tickets count by adding the given delta
+// Use negative value to decrease, positive value to increase
+func (r *eventRepository) UpdateAvailableTickets(eventID uuid.UUID, delta int) error {
 	ctx := context.Background()
 
-	err := r.client.Event.
-		UpdateOneID(eventID).
-		SetAvailableTickets(tickets).
-		Exec(ctx)
+	// Get current event
+	event, err := r.client.Event.Get(ctx, eventID)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return domain.ErrNotFound
 		}
+		return fmt.Errorf("failed to get event: %w", err)
+	}
+
+	// Calculate new available tickets
+	newAvailable := event.AvailableTickets + delta
+
+	// Validate new value
+	if newAvailable < 0 {
+		return fmt.Errorf("insufficient tickets: only %d tickets available", event.AvailableTickets)
+	}
+	if newAvailable > event.TotalTickets {
+		return fmt.Errorf("available tickets cannot exceed total tickets (%d)", event.TotalTickets)
+	}
+
+	// Update available tickets
+	err = r.client.Event.
+		UpdateOneID(eventID).
+		SetAvailableTickets(newAvailable).
+		Exec(ctx)
+	if err != nil {
 		return fmt.Errorf("failed to update available tickets: %w", err)
 	}
 
