@@ -119,6 +119,7 @@ func main() {
 	events.Put("/:id", eventHandler.UpdateEvent)
 	events.Delete("/:id", eventHandler.DeleteEvent)
 	events.Get("/:eventId/payments", paymentHandler.GetEventPayments)
+	events.Get("/:eventId/attendees", paymentHandler.GetEventAttendees)
 
 	// Payment routes
 	payments := api.Group("/payments")
@@ -127,6 +128,7 @@ func main() {
 	payments.Get("/:id", paymentHandler.GetPayment)
 	payments.Get("/order/:orderId", paymentHandler.GetPaymentByOrderID)
 	payments.Post("/complete", paymentHandler.CompletePayment)
+	payments.Delete("/:id", paymentHandler.CancelPayment)
 
 	// Public event routes (no authentication)
 	publicEvents := app.Group("/public/events")

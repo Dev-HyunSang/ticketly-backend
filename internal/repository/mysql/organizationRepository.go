@@ -32,15 +32,20 @@ func (r *organizationRepository) Create(org *domain.Organization) (*domain.Organ
 	}
 
 	// Create organization
-	createdOrg, err := tx.Organization.
+	builder := tx.Organization.
 		Create().
 		SetID(org.ID).
 		SetName(org.Name).
 		SetNillableDescription(&org.Description).
 		SetNillableLogoURL(&org.LogoURL).
 		SetOwnerID(org.OwnerID).
-		SetIsActive(org.IsActive).
-		Save(ctx)
+		SetIsActive(org.IsActive)
+
+	if org.Category != "" {
+		builder.SetCategory(org.Category)
+	}
+
+	createdOrg, err := builder.Save(ctx)
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("failed to create organization: %w", err)
@@ -68,6 +73,7 @@ func (r *organizationRepository) Create(org *domain.Organization) (*domain.Organ
 		Name:        createdOrg.Name,
 		Description: createdOrg.Description,
 		LogoURL:     createdOrg.LogoURL,
+		Category:    createdOrg.Category,
 		OwnerID:     createdOrg.OwnerID,
 		IsActive:    createdOrg.IsActive,
 		CreatedAt:   createdOrg.CreatedAt,
@@ -95,6 +101,7 @@ func (r *organizationRepository) GetByID(orgID uuid.UUID) (*domain.Organization,
 		Name:        org.Name,
 		Description: org.Description,
 		LogoURL:     org.LogoURL,
+		Category:    org.Category,
 		OwnerID:     org.OwnerID,
 		IsActive:    org.IsActive,
 		CreatedAt:   org.CreatedAt,
@@ -121,6 +128,7 @@ func (r *organizationRepository) GetByOwnerID(ownerID uuid.UUID) ([]*domain.Orga
 			Name:        org.Name,
 			Description: org.Description,
 			LogoURL:     org.LogoURL,
+			Category:    org.Category,
 			OwnerID:     org.OwnerID,
 			IsActive:    org.IsActive,
 			CreatedAt:   org.CreatedAt,
@@ -140,6 +148,7 @@ func (r *organizationRepository) Update(org *domain.Organization) error {
 		SetName(org.Name).
 		SetDescription(org.Description).
 		SetLogoURL(org.LogoURL).
+		SetCategory(org.Category).
 		SetIsActive(org.IsActive).
 		Exec(ctx)
 	if err != nil {
@@ -342,6 +351,7 @@ func (r *organizationRepository) GetUserOrganizations(userID uuid.UUID) ([]*doma
 				Name:        org.Name,
 				Description: org.Description,
 				LogoURL:     org.LogoURL,
+				Category:    org.Category,
 				OwnerID:     org.OwnerID,
 				IsActive:    org.IsActive,
 				CreatedAt:   org.CreatedAt,

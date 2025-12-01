@@ -34,6 +34,8 @@ const (
 	FieldTotalTickets = "total_tickets"
 	// FieldAvailableTickets holds the string denoting the available_tickets field in the database.
 	FieldAvailableTickets = "available_tickets"
+	// FieldParticipantCount holds the string denoting the participant_count field in the database.
+	FieldParticipantCount = "participant_count"
 	// FieldTicketPrice holds the string denoting the ticket_price field in the database.
 	FieldTicketPrice = "ticket_price"
 	// FieldCurrency holds the string denoting the currency field in the database.
@@ -93,6 +95,7 @@ var Columns = []string{
 	FieldEndTime,
 	FieldTotalTickets,
 	FieldAvailableTickets,
+	FieldParticipantCount,
 	FieldTicketPrice,
 	FieldCurrency,
 	FieldThumbnailURL,
@@ -124,6 +127,10 @@ var (
 	DefaultAvailableTickets int
 	// AvailableTicketsValidator is a validator for the "available_tickets" field. It is called by the builders before save.
 	AvailableTicketsValidator func(int) error
+	// DefaultParticipantCount holds the default value on creation for the "participant_count" field.
+	DefaultParticipantCount int
+	// ParticipantCountValidator is a validator for the "participant_count" field. It is called by the builders before save.
+	ParticipantCountValidator func(int) error
 	// DefaultTicketPrice holds the default value on creation for the "ticket_price" field.
 	DefaultTicketPrice float64
 	// TicketPriceValidator is a validator for the "ticket_price" field. It is called by the builders before save.
@@ -222,6 +229,11 @@ func ByTotalTickets(opts ...sql.OrderTermOption) OrderOption {
 // ByAvailableTickets orders the results by the available_tickets field.
 func ByAvailableTickets(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAvailableTickets, opts...).ToFunc()
+}
+
+// ByParticipantCount orders the results by the participant_count field.
+func ByParticipantCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldParticipantCount, opts...).ToFunc()
 }
 
 // ByTicketPrice orders the results by the ticket_price field.

@@ -190,6 +190,27 @@ func (_u *EventUpdate) AddAvailableTickets(v int) *EventUpdate {
 	return _u
 }
 
+// SetParticipantCount sets the "participant_count" field.
+func (_u *EventUpdate) SetParticipantCount(v int) *EventUpdate {
+	_u.mutation.ResetParticipantCount()
+	_u.mutation.SetParticipantCount(v)
+	return _u
+}
+
+// SetNillableParticipantCount sets the "participant_count" field if the given value is not nil.
+func (_u *EventUpdate) SetNillableParticipantCount(v *int) *EventUpdate {
+	if v != nil {
+		_u.SetParticipantCount(*v)
+	}
+	return _u
+}
+
+// AddParticipantCount adds value to the "participant_count" field.
+func (_u *EventUpdate) AddParticipantCount(v int) *EventUpdate {
+	_u.mutation.AddParticipantCount(v)
+	return _u
+}
+
 // SetTicketPrice sets the "ticket_price" field.
 func (_u *EventUpdate) SetTicketPrice(v float64) *EventUpdate {
 	_u.mutation.ResetTicketPrice()
@@ -415,6 +436,11 @@ func (_u *EventUpdate) check() error {
 			return &ValidationError{Name: "available_tickets", err: fmt.Errorf(`ent: validator failed for field "Event.available_tickets": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.ParticipantCount(); ok {
+		if err := event.ParticipantCountValidator(v); err != nil {
+			return &ValidationError{Name: "participant_count", err: fmt.Errorf(`ent: validator failed for field "Event.participant_count": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.TicketPrice(); ok {
 		if err := event.TicketPriceValidator(v); err != nil {
 			return &ValidationError{Name: "ticket_price", err: fmt.Errorf(`ent: validator failed for field "Event.ticket_price": %w`, err)}
@@ -484,6 +510,12 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedAvailableTickets(); ok {
 		_spec.AddField(event.FieldAvailableTickets, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.ParticipantCount(); ok {
+		_spec.SetField(event.FieldParticipantCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedParticipantCount(); ok {
+		_spec.AddField(event.FieldParticipantCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.TicketPrice(); ok {
 		_spec.SetField(event.FieldTicketPrice, field.TypeFloat64, value)
@@ -790,6 +822,27 @@ func (_u *EventUpdateOne) AddAvailableTickets(v int) *EventUpdateOne {
 	return _u
 }
 
+// SetParticipantCount sets the "participant_count" field.
+func (_u *EventUpdateOne) SetParticipantCount(v int) *EventUpdateOne {
+	_u.mutation.ResetParticipantCount()
+	_u.mutation.SetParticipantCount(v)
+	return _u
+}
+
+// SetNillableParticipantCount sets the "participant_count" field if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableParticipantCount(v *int) *EventUpdateOne {
+	if v != nil {
+		_u.SetParticipantCount(*v)
+	}
+	return _u
+}
+
+// AddParticipantCount adds value to the "participant_count" field.
+func (_u *EventUpdateOne) AddParticipantCount(v int) *EventUpdateOne {
+	_u.mutation.AddParticipantCount(v)
+	return _u
+}
+
 // SetTicketPrice sets the "ticket_price" field.
 func (_u *EventUpdateOne) SetTicketPrice(v float64) *EventUpdateOne {
 	_u.mutation.ResetTicketPrice()
@@ -1028,6 +1081,11 @@ func (_u *EventUpdateOne) check() error {
 			return &ValidationError{Name: "available_tickets", err: fmt.Errorf(`ent: validator failed for field "Event.available_tickets": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.ParticipantCount(); ok {
+		if err := event.ParticipantCountValidator(v); err != nil {
+			return &ValidationError{Name: "participant_count", err: fmt.Errorf(`ent: validator failed for field "Event.participant_count": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.TicketPrice(); ok {
 		if err := event.TicketPriceValidator(v); err != nil {
 			return &ValidationError{Name: "ticket_price", err: fmt.Errorf(`ent: validator failed for field "Event.ticket_price": %w`, err)}
@@ -1114,6 +1172,12 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 	}
 	if value, ok := _u.mutation.AddedAvailableTickets(); ok {
 		_spec.AddField(event.FieldAvailableTickets, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.ParticipantCount(); ok {
+		_spec.SetField(event.FieldParticipantCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedParticipantCount(); ok {
+		_spec.AddField(event.FieldParticipantCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.TicketPrice(); ok {
 		_spec.SetField(event.FieldTicketPrice, field.TypeFloat64, value)

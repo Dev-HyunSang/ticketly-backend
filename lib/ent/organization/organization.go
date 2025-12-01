@@ -21,6 +21,8 @@ const (
 	FieldDescription = "description"
 	// FieldLogoURL holds the string denoting the logo_url field in the database.
 	FieldLogoURL = "logo_url"
+	// FieldCategory holds the string denoting the category field in the database.
+	FieldCategory = "category"
 	// FieldOwnerID holds the string denoting the owner_id field in the database.
 	FieldOwnerID = "owner_id"
 	// FieldIsActive holds the string denoting the is_active field in the database.
@@ -66,6 +68,7 @@ var Columns = []string{
 	FieldName,
 	FieldDescription,
 	FieldLogoURL,
+	FieldCategory,
 	FieldOwnerID,
 	FieldIsActive,
 	FieldCreatedAt,
@@ -118,6 +121,11 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByLogoURL orders the results by the logo_url field.
 func ByLogoURL(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLogoURL, opts...).ToFunc()
+}
+
+// ByCategory orders the results by the category field.
+func ByCategory(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCategory, opts...).ToFunc()
 }
 
 // ByOwnerID orders the results by the owner_id field.

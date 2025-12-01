@@ -71,6 +71,11 @@ func LogoURL(v string) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldLogoURL, v))
 }
 
+// Category applies equality check predicate on the "category" field. It's identical to CategoryEQ.
+func Category(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldCategory, v))
+}
+
 // OwnerID applies equality check predicate on the "owner_id" field. It's identical to OwnerIDEQ.
 func OwnerID(v uuid.UUID) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldOwnerID, v))
@@ -304,6 +309,81 @@ func LogoURLEqualFold(v string) predicate.Organization {
 // LogoURLContainsFold applies the ContainsFold predicate on the "logo_url" field.
 func LogoURLContainsFold(v string) predicate.Organization {
 	return predicate.Organization(sql.FieldContainsFold(FieldLogoURL, v))
+}
+
+// CategoryEQ applies the EQ predicate on the "category" field.
+func CategoryEQ(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldCategory, v))
+}
+
+// CategoryNEQ applies the NEQ predicate on the "category" field.
+func CategoryNEQ(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldNEQ(FieldCategory, v))
+}
+
+// CategoryIn applies the In predicate on the "category" field.
+func CategoryIn(vs ...string) predicate.Organization {
+	return predicate.Organization(sql.FieldIn(FieldCategory, vs...))
+}
+
+// CategoryNotIn applies the NotIn predicate on the "category" field.
+func CategoryNotIn(vs ...string) predicate.Organization {
+	return predicate.Organization(sql.FieldNotIn(FieldCategory, vs...))
+}
+
+// CategoryGT applies the GT predicate on the "category" field.
+func CategoryGT(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldGT(FieldCategory, v))
+}
+
+// CategoryGTE applies the GTE predicate on the "category" field.
+func CategoryGTE(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldGTE(FieldCategory, v))
+}
+
+// CategoryLT applies the LT predicate on the "category" field.
+func CategoryLT(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldLT(FieldCategory, v))
+}
+
+// CategoryLTE applies the LTE predicate on the "category" field.
+func CategoryLTE(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldLTE(FieldCategory, v))
+}
+
+// CategoryContains applies the Contains predicate on the "category" field.
+func CategoryContains(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldContains(FieldCategory, v))
+}
+
+// CategoryHasPrefix applies the HasPrefix predicate on the "category" field.
+func CategoryHasPrefix(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldHasPrefix(FieldCategory, v))
+}
+
+// CategoryHasSuffix applies the HasSuffix predicate on the "category" field.
+func CategoryHasSuffix(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldHasSuffix(FieldCategory, v))
+}
+
+// CategoryIsNil applies the IsNil predicate on the "category" field.
+func CategoryIsNil() predicate.Organization {
+	return predicate.Organization(sql.FieldIsNull(FieldCategory))
+}
+
+// CategoryNotNil applies the NotNil predicate on the "category" field.
+func CategoryNotNil() predicate.Organization {
+	return predicate.Organization(sql.FieldNotNull(FieldCategory))
+}
+
+// CategoryEqualFold applies the EqualFold predicate on the "category" field.
+func CategoryEqualFold(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEqualFold(FieldCategory, v))
+}
+
+// CategoryContainsFold applies the ContainsFold predicate on the "category" field.
+func CategoryContainsFold(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldContainsFold(FieldCategory, v))
 }
 
 // OwnerIDEQ applies the EQ predicate on the "owner_id" field.

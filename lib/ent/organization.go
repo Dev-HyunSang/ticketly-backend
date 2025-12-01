@@ -25,6 +25,8 @@ type Organization struct {
 	Description string `json:"description,omitempty"`
 	// Organization logo URL
 	LogoURL string `json:"logo_url,omitempty"`
+	// Organization category (e.g., Technology, Music, Sports, Education, etc.)
+	Category string `json:"category,omitempty"`
 	// User ID of the organization owner
 	OwnerID uuid.UUID `json:"owner_id,omitempty"`
 	// Whether the organization is active
@@ -88,7 +90,7 @@ func (*Organization) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case organization.FieldIsActive:
 			values[i] = new(sql.NullBool)
-		case organization.FieldName, organization.FieldDescription, organization.FieldLogoURL:
+		case organization.FieldName, organization.FieldDescription, organization.FieldLogoURL, organization.FieldCategory:
 			values[i] = new(sql.NullString)
 		case organization.FieldCreatedAt, organization.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -132,6 +134,12 @@ func (_m *Organization) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field logo_url", values[i])
 			} else if value.Valid {
 				_m.LogoURL = value.String
+			}
+		case organization.FieldCategory:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field category", values[i])
+			} else if value.Valid {
+				_m.Category = value.String
 			}
 		case organization.FieldOwnerID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -216,6 +224,9 @@ func (_m *Organization) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("logo_url=")
 	builder.WriteString(_m.LogoURL)
+	builder.WriteString(", ")
+	builder.WriteString("category=")
+	builder.WriteString(_m.Category)
 	builder.WriteString(", ")
 	builder.WriteString("owner_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.OwnerID))

@@ -20,12 +20,14 @@ type CreateOrganizationRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	LogoURL     string `json:"logo_url"`
+	Category    string `json:"category"`
 }
 
 type UpdateOrganizationRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	LogoURL     string `json:"logo_url"`
+	Category    string `json:"category"`
 }
 
 type AddMemberRequest struct {
@@ -48,7 +50,7 @@ func (h *OrganizationHandler) CreateOrganization(c *fiber.Ctx) error {
 		})
 	}
 
-	org, err := h.orgUseCase.CreateOrganization(req.Name, req.Description, req.LogoURL, userID)
+	org, err := h.orgUseCase.CreateOrganization(req.Name, req.Description, req.LogoURL, req.Category, userID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -116,7 +118,7 @@ func (h *OrganizationHandler) UpdateOrganization(c *fiber.Ctx) error {
 		})
 	}
 
-	err = h.orgUseCase.UpdateOrganization(orgID, req.Name, req.Description, req.LogoURL, userID)
+	err = h.orgUseCase.UpdateOrganization(orgID, req.Name, req.Description, req.LogoURL, req.Category, userID)
 	if err != nil {
 		status := fiber.StatusInternalServerError
 		if err.Error() == "permission denied: admin role required" {
@@ -129,6 +131,7 @@ func (h *OrganizationHandler) UpdateOrganization(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Organization updated successfully",
+		"data":    req,
 	})
 }
 

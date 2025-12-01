@@ -123,6 +123,28 @@ func (h *PaymentHandler) GetEventPayments(c *fiber.Ctx) error {
 	})
 }
 
+// GetEventAttendees retrieves the attendee list for an event (completed payments only)
+func (h *PaymentHandler) GetEventAttendees(c *fiber.Ctx) error {
+	eventID, err := uuid.Parse(c.Params("eventId"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid event ID",
+		})
+	}
+
+	attendees, err := h.paymentUseCase.GetEventAttendees(eventID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"attendees": attendees,
+		"count":     len(attendees),
+	})
+}
+
 // CompletePayment completes a payment after payment gateway confirmation
 func (h *PaymentHandler) CompletePayment(c *fiber.Ctx) error {
 	type CompleteRequest struct {
@@ -152,6 +174,38 @@ func (h *PaymentHandler) CompletePayment(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Payment completed successfully",
+		"payment": payment,
+	})
+}
+
+// CancelPayment cancels a payment and restores tickets
+func (h *PaymentHandler) CancelPayment(c *fiber.Ctx) error {
+	// Get user ID from context (optional for guest checkout)
+	var userID *uuid.UUID
+	if id, ok := c.Locals("userID").(uuid.UUID); ok {
+		userID = &id
+	}
+
+	paymentID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid payment ID",
+		})
+	}
+
+	payment, err := h.paymentUseCase.CancelPayment(paymentID, userID)
+	if err != nil {
+		status := fiber.StatusBadRequest
+		if err.Error() == "permission denied: you can only cancel your own payments" {
+			status = fiber.StatusForbidden
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Payment cancelled successfully",
 		"payment": payment,
 	})
 }

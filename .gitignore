@@ -3,3 +3,6 @@
 
 .vscode
 .DS_Storemain
+bin/
+.idea
+.claude

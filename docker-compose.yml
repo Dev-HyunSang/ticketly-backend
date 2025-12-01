@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ticketly-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: LqoR6wCPQQtnxKq1EFLN  # 수정 필요
+      MYSQL_DATABASE: ticketly
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - ticketly-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ticketly-redis
+    restart: unless-stopped
+    command: redis-server --requirepass FoyaV0QhwW9ULRG31pNY  # 수정 필요
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ticketly-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  ticketly-network:
+    driver: bridge

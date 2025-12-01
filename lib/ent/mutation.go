@@ -52,6 +52,8 @@ type EventMutation struct {
 	addtotal_tickets     *int
 	available_tickets    *int
 	addavailable_tickets *int
+	participant_count    *int
+	addparticipant_count *int
 	ticket_price         *float64
 	addticket_price      *float64
 	currency             *string
@@ -580,6 +582,62 @@ func (m *EventMutation) ResetAvailableTickets() {
 	m.addavailable_tickets = nil
 }
 
+// SetParticipantCount sets the "participant_count" field.
+func (m *EventMutation) SetParticipantCount(i int) {
+	m.participant_count = &i
+	m.addparticipant_count = nil
+}
+
+// ParticipantCount returns the value of the "participant_count" field in the mutation.
+func (m *EventMutation) ParticipantCount() (r int, exists bool) {
+	v := m.participant_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldParticipantCount returns the old "participant_count" field's value of the Event entity.
+// If the Event object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventMutation) OldParticipantCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldParticipantCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldParticipantCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldParticipantCount: %w", err)
+	}
+	return oldValue.ParticipantCount, nil
+}
+
+// AddParticipantCount adds i to the "participant_count" field.
+func (m *EventMutation) AddParticipantCount(i int) {
+	if m.addparticipant_count != nil {
+		*m.addparticipant_count += i
+	} else {
+		m.addparticipant_count = &i
+	}
+}
+
+// AddedParticipantCount returns the value that was added to the "participant_count" field in this mutation.
+func (m *EventMutation) AddedParticipantCount() (r int, exists bool) {
+	v := m.addparticipant_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetParticipantCount resets all changes to the "participant_count" field.
+func (m *EventMutation) ResetParticipantCount() {
+	m.participant_count = nil
+	m.addparticipant_count = nil
+}
+
 // SetTicketPrice sets the "ticket_price" field.
 func (m *EventMutation) SetTicketPrice(f float64) {
 	m.ticket_price = &f
@@ -1056,7 +1114,7 @@ func (m *EventMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EventMutation) Fields() []string {
-	fields := make([]string, 0, 17)
+	fields := make([]string, 0, 18)
 	if m.organization != nil {
 		fields = append(fields, event.FieldOrganizationID)
 	}
@@ -1083,6 +1141,9 @@ func (m *EventMutation) Fields() []string {
 	}
 	if m.available_tickets != nil {
 		fields = append(fields, event.FieldAvailableTickets)
+	}
+	if m.participant_count != nil {
+		fields = append(fields, event.FieldParticipantCount)
 	}
 	if m.ticket_price != nil {
 		fields = append(fields, event.FieldTicketPrice)
@@ -1134,6 +1195,8 @@ func (m *EventMutation) Field(name string) (ent.Value, bool) {
 		return m.TotalTickets()
 	case event.FieldAvailableTickets:
 		return m.AvailableTickets()
+	case event.FieldParticipantCount:
+		return m.ParticipantCount()
 	case event.FieldTicketPrice:
 		return m.TicketPrice()
 	case event.FieldCurrency:
@@ -1177,6 +1240,8 @@ func (m *EventMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldTotalTickets(ctx)
 	case event.FieldAvailableTickets:
 		return m.OldAvailableTickets(ctx)
+	case event.FieldParticipantCount:
+		return m.OldParticipantCount(ctx)
 	case event.FieldTicketPrice:
 		return m.OldTicketPrice(ctx)
 	case event.FieldCurrency:
@@ -1265,6 +1330,13 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetAvailableTickets(v)
 		return nil
+	case event.FieldParticipantCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetParticipantCount(v)
+		return nil
 	case event.FieldTicketPrice:
 		v, ok := value.(float64)
 		if !ok {
@@ -1335,6 +1407,9 @@ func (m *EventMutation) AddedFields() []string {
 	if m.addavailable_tickets != nil {
 		fields = append(fields, event.FieldAvailableTickets)
 	}
+	if m.addparticipant_count != nil {
+		fields = append(fields, event.FieldParticipantCount)
+	}
 	if m.addticket_price != nil {
 		fields = append(fields, event.FieldTicketPrice)
 	}
@@ -1350,6 +1425,8 @@ func (m *EventMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedTotalTickets()
 	case event.FieldAvailableTickets:
 		return m.AddedAvailableTickets()
+	case event.FieldParticipantCount:
+		return m.AddedParticipantCount()
 	case event.FieldTicketPrice:
 		return m.AddedTicketPrice()
 	}
@@ -1374,6 +1451,13 @@ func (m *EventMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddAvailableTickets(v)
+		return nil
+	case event.FieldParticipantCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddParticipantCount(v)
 		return nil
 	case event.FieldTicketPrice:
 		v, ok := value.(float64)
@@ -1462,6 +1546,9 @@ func (m *EventMutation) ResetField(name string) error {
 		return nil
 	case event.FieldAvailableTickets:
 		m.ResetAvailableTickets()
+		return nil
+	case event.FieldParticipantCount:
+		m.ResetParticipantCount()
 		return nil
 	case event.FieldTicketPrice:
 		m.ResetTicketPrice()
@@ -1620,6 +1707,7 @@ type OrganizationMutation struct {
 	name           *string
 	description    *string
 	logo_url       *string
+	category       *string
 	is_active      *bool
 	created_at     *time.Time
 	updated_at     *time.Time
@@ -1873,6 +1961,55 @@ func (m *OrganizationMutation) LogoURLCleared() bool {
 func (m *OrganizationMutation) ResetLogoURL() {
 	m.logo_url = nil
 	delete(m.clearedFields, organization.FieldLogoURL)
+}
+
+// SetCategory sets the "category" field.
+func (m *OrganizationMutation) SetCategory(s string) {
+	m.category = &s
+}
+
+// Category returns the value of the "category" field in the mutation.
+func (m *OrganizationMutation) Category() (r string, exists bool) {
+	v := m.category
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCategory returns the old "category" field's value of the Organization entity.
+// If the Organization object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrganizationMutation) OldCategory(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCategory is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCategory requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCategory: %w", err)
+	}
+	return oldValue.Category, nil
+}
+
+// ClearCategory clears the value of the "category" field.
+func (m *OrganizationMutation) ClearCategory() {
+	m.category = nil
+	m.clearedFields[organization.FieldCategory] = struct{}{}
+}
+
+// CategoryCleared returns if the "category" field was cleared in this mutation.
+func (m *OrganizationMutation) CategoryCleared() bool {
+	_, ok := m.clearedFields[organization.FieldCategory]
+	return ok
+}
+
+// ResetCategory resets all changes to the "category" field.
+func (m *OrganizationMutation) ResetCategory() {
+	m.category = nil
+	delete(m.clearedFields, organization.FieldCategory)
 }
 
 // SetOwnerID sets the "owner_id" field.
@@ -2188,7 +2325,7 @@ func (m *OrganizationMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *OrganizationMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.name != nil {
 		fields = append(fields, organization.FieldName)
 	}
@@ -2197,6 +2334,9 @@ func (m *OrganizationMutation) Fields() []string {
 	}
 	if m.logo_url != nil {
 		fields = append(fields, organization.FieldLogoURL)
+	}
+	if m.category != nil {
+		fields = append(fields, organization.FieldCategory)
 	}
 	if m.owner != nil {
 		fields = append(fields, organization.FieldOwnerID)
@@ -2224,6 +2364,8 @@ func (m *OrganizationMutation) Field(name string) (ent.Value, bool) {
 		return m.Description()
 	case organization.FieldLogoURL:
 		return m.LogoURL()
+	case organization.FieldCategory:
+		return m.Category()
 	case organization.FieldOwnerID:
 		return m.OwnerID()
 	case organization.FieldIsActive:
@@ -2247,6 +2389,8 @@ func (m *OrganizationMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldDescription(ctx)
 	case organization.FieldLogoURL:
 		return m.OldLogoURL(ctx)
+	case organization.FieldCategory:
+		return m.OldCategory(ctx)
 	case organization.FieldOwnerID:
 		return m.OldOwnerID(ctx)
 	case organization.FieldIsActive:
@@ -2284,6 +2428,13 @@ func (m *OrganizationMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLogoURL(v)
+		return nil
+	case organization.FieldCategory:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCategory(v)
 		return nil
 	case organization.FieldOwnerID:
 		v, ok := value.(uuid.UUID)
@@ -2349,6 +2500,9 @@ func (m *OrganizationMutation) ClearedFields() []string {
 	if m.FieldCleared(organization.FieldLogoURL) {
 		fields = append(fields, organization.FieldLogoURL)
 	}
+	if m.FieldCleared(organization.FieldCategory) {
+		fields = append(fields, organization.FieldCategory)
+	}
 	return fields
 }
 
@@ -2369,6 +2523,9 @@ func (m *OrganizationMutation) ClearField(name string) error {
 	case organization.FieldLogoURL:
 		m.ClearLogoURL()
 		return nil
+	case organization.FieldCategory:
+		m.ClearCategory()
+		return nil
 	}
 	return fmt.Errorf("unknown Organization nullable field %s", name)
 }
@@ -2385,6 +2542,9 @@ func (m *OrganizationMutation) ResetField(name string) error {
 		return nil
 	case organization.FieldLogoURL:
 		m.ResetLogoURL()
+		return nil
+	case organization.FieldCategory:
+		m.ResetCategory()
 		return nil
 	case organization.FieldOwnerID:
 		m.ResetOwnerID()

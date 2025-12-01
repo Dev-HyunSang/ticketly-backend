@@ -36,26 +36,32 @@ func init() {
 	event.DefaultAvailableTickets = eventDescAvailableTickets.Default.(int)
 	// event.AvailableTicketsValidator is a validator for the "available_tickets" field. It is called by the builders before save.
 	event.AvailableTicketsValidator = eventDescAvailableTickets.Validators[0].(func(int) error)
+	// eventDescParticipantCount is the schema descriptor for participant_count field.
+	eventDescParticipantCount := eventFields[10].Descriptor()
+	// event.DefaultParticipantCount holds the default value on creation for the participant_count field.
+	event.DefaultParticipantCount = eventDescParticipantCount.Default.(int)
+	// event.ParticipantCountValidator is a validator for the "participant_count" field. It is called by the builders before save.
+	event.ParticipantCountValidator = eventDescParticipantCount.Validators[0].(func(int) error)
 	// eventDescTicketPrice is the schema descriptor for ticket_price field.
-	eventDescTicketPrice := eventFields[10].Descriptor()
+	eventDescTicketPrice := eventFields[11].Descriptor()
 	// event.DefaultTicketPrice holds the default value on creation for the ticket_price field.
 	event.DefaultTicketPrice = eventDescTicketPrice.Default.(float64)
 	// event.TicketPriceValidator is a validator for the "ticket_price" field. It is called by the builders before save.
 	event.TicketPriceValidator = eventDescTicketPrice.Validators[0].(func(float64) error)
 	// eventDescCurrency is the schema descriptor for currency field.
-	eventDescCurrency := eventFields[11].Descriptor()
+	eventDescCurrency := eventFields[12].Descriptor()
 	// event.DefaultCurrency holds the default value on creation for the currency field.
 	event.DefaultCurrency = eventDescCurrency.Default.(string)
 	// eventDescIsPublic is the schema descriptor for is_public field.
-	eventDescIsPublic := eventFields[14].Descriptor()
+	eventDescIsPublic := eventFields[15].Descriptor()
 	// event.DefaultIsPublic holds the default value on creation for the is_public field.
 	event.DefaultIsPublic = eventDescIsPublic.Default.(bool)
 	// eventDescCreatedAt is the schema descriptor for created_at field.
-	eventDescCreatedAt := eventFields[16].Descriptor()
+	eventDescCreatedAt := eventFields[17].Descriptor()
 	// event.DefaultCreatedAt holds the default value on creation for the created_at field.
 	event.DefaultCreatedAt = eventDescCreatedAt.Default.(func() time.Time)
 	// eventDescUpdatedAt is the schema descriptor for updated_at field.
-	eventDescUpdatedAt := eventFields[17].Descriptor()
+	eventDescUpdatedAt := eventFields[18].Descriptor()
 	// event.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	event.DefaultUpdatedAt = eventDescUpdatedAt.Default.(func() time.Time)
 	// event.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -71,15 +77,15 @@ func init() {
 	// organization.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	organization.NameValidator = organizationDescName.Validators[0].(func(string) error)
 	// organizationDescIsActive is the schema descriptor for is_active field.
-	organizationDescIsActive := organizationFields[5].Descriptor()
+	organizationDescIsActive := organizationFields[6].Descriptor()
 	// organization.DefaultIsActive holds the default value on creation for the is_active field.
 	organization.DefaultIsActive = organizationDescIsActive.Default.(bool)
 	// organizationDescCreatedAt is the schema descriptor for created_at field.
-	organizationDescCreatedAt := organizationFields[6].Descriptor()
+	organizationDescCreatedAt := organizationFields[7].Descriptor()
 	// organization.DefaultCreatedAt holds the default value on creation for the created_at field.
 	organization.DefaultCreatedAt = organizationDescCreatedAt.Default.(func() time.Time)
 	// organizationDescUpdatedAt is the schema descriptor for updated_at field.
-	organizationDescUpdatedAt := organizationFields[7].Descriptor()
+	organizationDescUpdatedAt := organizationFields[8].Descriptor()
 	// organization.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	organization.DefaultUpdatedAt = organizationDescUpdatedAt.Default.(func() time.Time)
 	// organization.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

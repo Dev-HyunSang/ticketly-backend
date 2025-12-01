@@ -47,6 +47,10 @@ func (Event) Fields() []ent.Field {
 			Default(0).
 			NonNegative().
 			Comment("Number of tickets still available"),
+		field.Int("participant_count").
+			Default(0).
+			NonNegative().
+			Comment("Real-time count of participants based on completed payments"),
 		field.Float("ticket_price").
 			Default(0.0).
 			Min(0).

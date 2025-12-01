@@ -101,6 +101,11 @@ func AvailableTickets(v int) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldAvailableTickets, v))
 }
 
+// ParticipantCount applies equality check predicate on the "participant_count" field. It's identical to ParticipantCountEQ.
+func ParticipantCount(v int) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldParticipantCount, v))
+}
+
 // TicketPrice applies equality check predicate on the "ticket_price" field. It's identical to TicketPriceEQ.
 func TicketPrice(v float64) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldTicketPrice, v))
@@ -604,6 +609,46 @@ func AvailableTicketsLT(v int) predicate.Event {
 // AvailableTicketsLTE applies the LTE predicate on the "available_tickets" field.
 func AvailableTicketsLTE(v int) predicate.Event {
 	return predicate.Event(sql.FieldLTE(FieldAvailableTickets, v))
+}
+
+// ParticipantCountEQ applies the EQ predicate on the "participant_count" field.
+func ParticipantCountEQ(v int) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldParticipantCount, v))
+}
+
+// ParticipantCountNEQ applies the NEQ predicate on the "participant_count" field.
+func ParticipantCountNEQ(v int) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldParticipantCount, v))
+}
+
+// ParticipantCountIn applies the In predicate on the "participant_count" field.
+func ParticipantCountIn(vs ...int) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldParticipantCount, vs...))
+}
+
+// ParticipantCountNotIn applies the NotIn predicate on the "participant_count" field.
+func ParticipantCountNotIn(vs ...int) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldParticipantCount, vs...))
+}
+
+// ParticipantCountGT applies the GT predicate on the "participant_count" field.
+func ParticipantCountGT(v int) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldParticipantCount, v))
+}
+
+// ParticipantCountGTE applies the GTE predicate on the "participant_count" field.
+func ParticipantCountGTE(v int) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldParticipantCount, v))
+}
+
+// ParticipantCountLT applies the LT predicate on the "participant_count" field.
+func ParticipantCountLT(v int) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldParticipantCount, v))
+}
+
+// ParticipantCountLTE applies the LTE predicate on the "participant_count" field.
+func ParticipantCountLTE(v int) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldParticipantCount, v))
 }
 
 // TicketPriceEQ applies the EQ predicate on the "ticket_price" field.

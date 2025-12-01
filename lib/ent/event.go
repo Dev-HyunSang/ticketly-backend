@@ -38,6 +38,8 @@ type Event struct {
 	TotalTickets int `json:"total_tickets,omitempty"`
 	// Number of tickets still available
 	AvailableTickets int `json:"available_tickets,omitempty"`
+	// Real-time count of participants based on completed payments
+	ParticipantCount int `json:"participant_count,omitempty"`
 	// Price per ticket
 	TicketPrice float64 `json:"ticket_price,omitempty"`
 	// Currency code (e.g., KRW, USD)
@@ -113,7 +115,7 @@ func (*Event) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case event.FieldTicketPrice:
 			values[i] = new(sql.NullFloat64)
-		case event.FieldTotalTickets, event.FieldAvailableTickets:
+		case event.FieldTotalTickets, event.FieldAvailableTickets, event.FieldParticipantCount:
 			values[i] = new(sql.NullInt64)
 		case event.FieldTitle, event.FieldDescription, event.FieldLocation, event.FieldVenue, event.FieldCurrency, event.FieldThumbnailURL, event.FieldStatus:
 			values[i] = new(sql.NullString)
@@ -195,6 +197,12 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field available_tickets", values[i])
 			} else if value.Valid {
 				_m.AvailableTickets = int(value.Int64)
+			}
+		case event.FieldParticipantCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field participant_count", values[i])
+			} else if value.Valid {
+				_m.ParticipantCount = int(value.Int64)
 			}
 		case event.FieldTicketPrice:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -321,6 +329,9 @@ func (_m *Event) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("available_tickets=")
 	builder.WriteString(fmt.Sprintf("%v", _m.AvailableTickets))
+	builder.WriteString(", ")
+	builder.WriteString("participant_count=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ParticipantCount))
 	builder.WriteString(", ")
 	builder.WriteString("ticket_price=")
 	builder.WriteString(fmt.Sprintf("%v", _m.TicketPrice))

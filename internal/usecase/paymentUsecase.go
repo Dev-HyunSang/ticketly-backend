@@ -16,8 +16,10 @@ type PaymentUseCase interface {
 	GetPaymentByOrderID(orderID string) (*domain.Payment, error)
 	GetUserPayments(userID uuid.UUID) ([]*domain.Payment, error)
 	GetEventPayments(eventID uuid.UUID) ([]*domain.Payment, error)
+	GetEventAttendees(eventID uuid.UUID) ([]*domain.Attendee, error)
 	UpdatePaymentStatus(paymentID uuid.UUID, status string, paymentKey string) error
 	CompletePayment(orderID string, paymentKey string) (*domain.Payment, error)
+	CancelPayment(paymentID uuid.UUID, userID *uuid.UUID) (*domain.Payment, error)
 }
 
 type CreatePaymentRequest struct {
@@ -116,6 +118,33 @@ func (uc *paymentUseCase) GetEventPayments(eventID uuid.UUID) ([]*domain.Payment
 	return uc.paymentRepo.GetByEventID(eventID)
 }
 
+func (uc *paymentUseCase) GetEventAttendees(eventID uuid.UUID) ([]*domain.Attendee, error) {
+	// Get completed payments only
+	payments, err := uc.paymentRepo.GetCompletedPaymentsByEventID(eventID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get attendees: %w", err)
+	}
+
+	// Convert payments to attendees
+	attendees := make([]*domain.Attendee, len(payments))
+	for i, p := range payments {
+		attendees[i] = &domain.Attendee{
+			PaymentID:      p.ID,
+			UserID:         p.UserID,
+			BuyerName:      p.BuyerName,
+			BuyerEmail:     p.BuyerEmail,
+			BuyerPhone:     p.BuyerPhone,
+			TicketQuantity: p.TicketQuantity,
+			TotalPrice:     p.TotalPrice,
+			Currency:       p.Currency,
+			OrderID:        p.OrderID,
+			PurchasedAt:    p.CreatedAt,
+		}
+	}
+
+	return attendees, nil
+}
+
 func (uc *paymentUseCase) UpdatePaymentStatus(paymentID uuid.UUID, status string, paymentKey string) error {
 	validStatuses := map[string]bool{
 		"pending": true, "completed": true, "failed": true, "cancelled": true, "refunded": true,
@@ -151,6 +180,73 @@ func (uc *paymentUseCase) CompletePayment(orderID string, paymentKey string) (*d
 		// Rollback payment status if ticket update fails
 		_ = uc.paymentRepo.UpdateStatus(payment.ID, "failed", paymentKey)
 		return nil, fmt.Errorf("failed to reserve tickets: %w", err)
+	}
+
+	// Update participant count
+	participantCount, err := uc.paymentRepo.GetParticipantCountByEventID(payment.EventID)
+	if err != nil {
+		// Log error but don't fail the payment
+		fmt.Printf("Warning: failed to update participant count: %v\n", err)
+	} else {
+		err = uc.eventRepo.UpdateParticipantCount(payment.EventID, participantCount)
+		if err != nil {
+			// Log error but don't fail the payment
+			fmt.Printf("Warning: failed to update participant count in DB: %v\n", err)
+		}
+	}
+
+	// Get updated payment
+	return uc.paymentRepo.GetByID(payment.ID)
+}
+
+func (uc *paymentUseCase) CancelPayment(paymentID uuid.UUID, userID *uuid.UUID) (*domain.Payment, error) {
+	// Get payment
+	payment, err := uc.paymentRepo.GetByID(paymentID)
+	if err != nil {
+		return nil, fmt.Errorf("payment not found: %w", err)
+	}
+
+	// Check if user has permission to cancel (only the buyer can cancel)
+	if userID != nil && payment.UserID != nil && *userID != *payment.UserID {
+		return nil, errors.New("permission denied: you can only cancel your own payments")
+	}
+
+	// Check if payment can be cancelled (only completed or pending status)
+	if payment.Status != "completed" && payment.Status != "pending" {
+		return nil, fmt.Errorf("cannot cancel payment with status: %s", payment.Status)
+	}
+
+	// If payment was completed, restore tickets
+	if payment.Status == "completed" {
+		err = uc.eventRepo.UpdateAvailableTickets(payment.EventID, payment.TicketQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("failed to restore tickets: %w", err)
+		}
+	}
+
+	// Update payment status to cancelled
+	err = uc.paymentRepo.UpdateStatus(payment.ID, "cancelled", "")
+	if err != nil {
+		// Rollback ticket restoration if status update fails
+		if payment.Status == "completed" {
+			_ = uc.eventRepo.UpdateAvailableTickets(payment.EventID, -payment.TicketQuantity)
+		}
+		return nil, fmt.Errorf("failed to cancel payment: %w", err)
+	}
+
+	// Update participant count if payment was completed
+	if payment.Status == "completed" {
+		participantCount, err := uc.paymentRepo.GetParticipantCountByEventID(payment.EventID)
+		if err != nil {
+			// Log error but don't fail the cancellation
+			fmt.Printf("Warning: failed to get participant count: %v\n", err)
+		} else {
+			err = uc.eventRepo.UpdateParticipantCount(payment.EventID, participantCount)
+			if err != nil {
+				// Log error but don't fail the cancellation
+				fmt.Printf("Warning: failed to update participant count in DB: %v\n", err)
+			}
+		}
 	}
 
 	// Get updated payment

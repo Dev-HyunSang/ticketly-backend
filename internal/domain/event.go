@@ -17,6 +17,7 @@ type Event struct {
 	EndTime          time.Time `json:"end_time"`
 	TotalTickets     int       `json:"total_tickets"`
 	AvailableTickets int       `json:"available_tickets"`
+	ParticipantCount int       `json:"participant_count"` // Real-time count based on completed payments
 	TicketPrice      float64   `json:"ticket_price"`
 	Currency         string    `json:"currency"`
 	ThumbnailURL     string    `json:"thumbnail_url,omitempty"`
@@ -50,4 +51,5 @@ type EventRepository interface {
 
 	// Ticket management
 	UpdateAvailableTickets(eventID uuid.UUID, tickets int) error
+	UpdateParticipantCount(eventID uuid.UUID, count int) error
 }

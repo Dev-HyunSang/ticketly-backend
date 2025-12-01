@@ -58,6 +58,20 @@ func (_c *OrganizationCreate) SetNillableLogoURL(v *string) *OrganizationCreate 
 	return _c
 }
 
+// SetCategory sets the "category" field.
+func (_c *OrganizationCreate) SetCategory(v string) *OrganizationCreate {
+	_c.mutation.SetCategory(v)
+	return _c
+}
+
+// SetNillableCategory sets the "category" field if the given value is not nil.
+func (_c *OrganizationCreate) SetNillableCategory(v *string) *OrganizationCreate {
+	if v != nil {
+		_c.SetCategory(*v)
+	}
+	return _c
+}
+
 // SetOwnerID sets the "owner_id" field.
 func (_c *OrganizationCreate) SetOwnerID(v uuid.UUID) *OrganizationCreate {
 	_c.mutation.SetOwnerID(v)
@@ -279,6 +293,10 @@ func (_c *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 	if value, ok := _c.mutation.LogoURL(); ok {
 		_spec.SetField(organization.FieldLogoURL, field.TypeString, value)
 		_node.LogoURL = value
+	}
+	if value, ok := _c.mutation.Category(); ok {
+		_spec.SetField(organization.FieldCategory, field.TypeString, value)
+		_node.Category = value
 	}
 	if value, ok := _c.mutation.IsActive(); ok {
 		_spec.SetField(organization.FieldIsActive, field.TypeBool, value)

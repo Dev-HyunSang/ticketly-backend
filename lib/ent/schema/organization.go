@@ -30,6 +30,9 @@ func (Organization) Fields() []ent.Field {
 		field.String("logo_url").
 			Optional().
 			Comment("Organization logo URL"),
+		field.String("category").
+			Optional().
+			Comment("Organization category (e.g., Technology, Music, Sports, Education, etc.)"),
 		field.UUID("owner_id", uuid.UUID{}).
 			Comment("User ID of the organization owner"),
 		field.Bool("is_active").

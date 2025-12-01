@@ -10,10 +10,10 @@ import (
 
 type OrganizationUseCase interface {
 	// Organization management
-	CreateOrganization(name, description, logoURL string, ownerID uuid.UUID) (*domain.Organization, error)
+	CreateOrganization(name, description, logoURL, category string, ownerID uuid.UUID) (*domain.Organization, error)
 	GetOrganization(orgID uuid.UUID) (*domain.Organization, error)
 	GetUserOrganizations(userID uuid.UUID) ([]*domain.OrganizationWithRole, error)
-	UpdateOrganization(orgID uuid.UUID, name, description, logoURL string, userID uuid.UUID) error
+	UpdateOrganization(orgID uuid.UUID, name, description, logoURL, category string, userID uuid.UUID) error
 	DeleteOrganization(orgID uuid.UUID, userID uuid.UUID) error
 
 	// Member management
@@ -38,7 +38,7 @@ func NewOrganizationUseCase(orgRepo domain.OrganizationRepository) OrganizationU
 }
 
 // CreateOrganization creates a new organization
-func (uc *organizationUseCase) CreateOrganization(name, description, logoURL string, ownerID uuid.UUID) (*domain.Organization, error) {
+func (uc *organizationUseCase) CreateOrganization(name, description, logoURL, category string, ownerID uuid.UUID) (*domain.Organization, error) {
 	if name == "" {
 		return nil, errors.New("organization name is required")
 	}
@@ -48,6 +48,7 @@ func (uc *organizationUseCase) CreateOrganization(name, description, logoURL str
 		Name:        name,
 		Description: description,
 		LogoURL:     logoURL,
+		Category:    category,
 		OwnerID:     ownerID,
 		IsActive:    true,
 		CreatedAt:   time.Now(),
@@ -68,7 +69,7 @@ func (uc *organizationUseCase) GetUserOrganizations(userID uuid.UUID) ([]*domain
 }
 
 // UpdateOrganization updates an organization (admin only)
-func (uc *organizationUseCase) UpdateOrganization(orgID uuid.UUID, name, description, logoURL string, userID uuid.UUID) error {
+func (uc *organizationUseCase) UpdateOrganization(orgID uuid.UUID, name, description, logoURL, category string, userID uuid.UUID) error {
 	// Check if user is admin
 	if err := uc.CheckAdminPermission(orgID, userID); err != nil {
 		return err
@@ -84,6 +85,7 @@ func (uc *organizationUseCase) UpdateOrganization(orgID uuid.UUID, name, descrip
 	}
 	org.Description = description
 	org.LogoURL = logoURL
+	org.Category = category
 	org.UpdatedAt = time.Now()
 
 	return uc.orgRepo.Update(org)

@@ -19,6 +19,7 @@ var (
 		{Name: "end_time", Type: field.TypeTime},
 		{Name: "total_tickets", Type: field.TypeInt, Default: 0},
 		{Name: "available_tickets", Type: field.TypeInt, Default: 0},
+		{Name: "participant_count", Type: field.TypeInt, Default: 0},
 		{Name: "ticket_price", Type: field.TypeFloat64, Default: 0},
 		{Name: "currency", Type: field.TypeString, Default: "KRW"},
 		{Name: "thumbnail_url", Type: field.TypeString, Nullable: true},
@@ -37,13 +38,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "events_organizations_events",
-				Columns:    []*schema.Column{EventsColumns[16]},
+				Columns:    []*schema.Column{EventsColumns[17]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "events_users_created_events",
-				Columns:    []*schema.Column{EventsColumns[17]},
+				Columns:    []*schema.Column{EventsColumns[18]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -55,6 +56,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "logo_url", Type: field.TypeString, Nullable: true},
+		{Name: "category", Type: field.TypeString, Nullable: true},
 		{Name: "is_active", Type: field.TypeBool, Default: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -68,7 +70,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "organizations_users_owned_organizations",
-				Columns:    []*schema.Column{OrganizationsColumns[7]},
+				Columns:    []*schema.Column{OrganizationsColumns[8]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

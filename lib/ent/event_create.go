@@ -118,6 +118,20 @@ func (_c *EventCreate) SetNillableAvailableTickets(v *int) *EventCreate {
 	return _c
 }
 
+// SetParticipantCount sets the "participant_count" field.
+func (_c *EventCreate) SetParticipantCount(v int) *EventCreate {
+	_c.mutation.SetParticipantCount(v)
+	return _c
+}
+
+// SetNillableParticipantCount sets the "participant_count" field if the given value is not nil.
+func (_c *EventCreate) SetNillableParticipantCount(v *int) *EventCreate {
+	if v != nil {
+		_c.SetParticipantCount(*v)
+	}
+	return _c
+}
+
 // SetTicketPrice sets the "ticket_price" field.
 func (_c *EventCreate) SetTicketPrice(v float64) *EventCreate {
 	_c.mutation.SetTicketPrice(v)
@@ -310,6 +324,10 @@ func (_c *EventCreate) defaults() {
 		v := event.DefaultAvailableTickets
 		_c.mutation.SetAvailableTickets(v)
 	}
+	if _, ok := _c.mutation.ParticipantCount(); !ok {
+		v := event.DefaultParticipantCount
+		_c.mutation.SetParticipantCount(v)
+	}
 	if _, ok := _c.mutation.TicketPrice(); !ok {
 		v := event.DefaultTicketPrice
 		_c.mutation.SetTicketPrice(v)
@@ -373,6 +391,14 @@ func (_c *EventCreate) check() error {
 	if v, ok := _c.mutation.AvailableTickets(); ok {
 		if err := event.AvailableTicketsValidator(v); err != nil {
 			return &ValidationError{Name: "available_tickets", err: fmt.Errorf(`ent: validator failed for field "Event.available_tickets": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.ParticipantCount(); !ok {
+		return &ValidationError{Name: "participant_count", err: errors.New(`ent: missing required field "Event.participant_count"`)}
+	}
+	if v, ok := _c.mutation.ParticipantCount(); ok {
+		if err := event.ParticipantCountValidator(v); err != nil {
+			return &ValidationError{Name: "participant_count", err: fmt.Errorf(`ent: validator failed for field "Event.participant_count": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.TicketPrice(); !ok {
@@ -478,6 +504,10 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.AvailableTickets(); ok {
 		_spec.SetField(event.FieldAvailableTickets, field.TypeInt, value)
 		_node.AvailableTickets = value
+	}
+	if value, ok := _c.mutation.ParticipantCount(); ok {
+		_spec.SetField(event.FieldParticipantCount, field.TypeInt, value)
+		_node.ParticipantCount = value
 	}
 	if value, ok := _c.mutation.TicketPrice(); ok {
 		_spec.SetField(event.FieldTicketPrice, field.TypeFloat64, value)

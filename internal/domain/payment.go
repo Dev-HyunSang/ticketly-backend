@@ -29,6 +29,20 @@ type PaymentWithEvent struct {
 	EventTitle string `json:"event_title"`
 }
 
+// Attendee represents a participant who completed payment
+type Attendee struct {
+	PaymentID      uuid.UUID  `json:"payment_id"`
+	UserID         *uuid.UUID `json:"user_id,omitempty"`
+	BuyerName      string     `json:"buyer_name"`
+	BuyerEmail     string     `json:"buyer_email"`
+	BuyerPhone     string     `json:"buyer_phone"`
+	TicketQuantity int        `json:"ticket_quantity"`
+	TotalPrice     float64    `json:"total_price"`
+	Currency       string     `json:"currency"`
+	OrderID        string     `json:"order_id"`
+	PurchasedAt    time.Time  `json:"purchased_at"`
+}
+
 // PaymentRepository defines the interface for payment data access
 type PaymentRepository interface {
 	Create(payment *Payment) (*Payment, error)
@@ -36,5 +50,7 @@ type PaymentRepository interface {
 	GetByOrderID(orderID string) (*Payment, error)
 	GetByUserID(userID uuid.UUID) ([]*Payment, error)
 	GetByEventID(eventID uuid.UUID) ([]*Payment, error)
+	GetCompletedPaymentsByEventID(eventID uuid.UUID) ([]*Payment, error)
 	UpdateStatus(paymentID uuid.UUID, status string, paymentKey string) error
+	GetParticipantCountByEventID(eventID uuid.UUID) (int, error)
 }

@@ -17,9 +17,10 @@ func ConnectRedis() (*redis.Client, error) {
 	password := config.Getenv("REDIS_PASSWORD")
 
 	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       0,
+		Addr:            addr,
+		Password:        password,
+		DB:              0,
+		DisableIndentity: true, // Disable client-side caching to suppress warnings
 	})
 
 	ctx := context.Background()

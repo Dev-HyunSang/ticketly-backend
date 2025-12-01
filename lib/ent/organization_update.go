@@ -86,6 +86,26 @@ func (_u *OrganizationUpdate) ClearLogoURL() *OrganizationUpdate {
 	return _u
 }
 
+// SetCategory sets the "category" field.
+func (_u *OrganizationUpdate) SetCategory(v string) *OrganizationUpdate {
+	_u.mutation.SetCategory(v)
+	return _u
+}
+
+// SetNillableCategory sets the "category" field if the given value is not nil.
+func (_u *OrganizationUpdate) SetNillableCategory(v *string) *OrganizationUpdate {
+	if v != nil {
+		_u.SetCategory(*v)
+	}
+	return _u
+}
+
+// ClearCategory clears the value of the "category" field.
+func (_u *OrganizationUpdate) ClearCategory() *OrganizationUpdate {
+	_u.mutation.ClearCategory()
+	return _u
+}
+
 // SetOwnerID sets the "owner_id" field.
 func (_u *OrganizationUpdate) SetOwnerID(v uuid.UUID) *OrganizationUpdate {
 	_u.mutation.SetOwnerID(v)
@@ -284,6 +304,12 @@ func (_u *OrganizationUpdate) sqlSave(ctx context.Context) (_node int, err error
 	if _u.mutation.LogoURLCleared() {
 		_spec.ClearField(organization.FieldLogoURL, field.TypeString)
 	}
+	if value, ok := _u.mutation.Category(); ok {
+		_spec.SetField(organization.FieldCategory, field.TypeString, value)
+	}
+	if _u.mutation.CategoryCleared() {
+		_spec.ClearField(organization.FieldCategory, field.TypeString)
+	}
 	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(organization.FieldIsActive, field.TypeBool, value)
 	}
@@ -480,6 +506,26 @@ func (_u *OrganizationUpdateOne) SetNillableLogoURL(v *string) *OrganizationUpda
 // ClearLogoURL clears the value of the "logo_url" field.
 func (_u *OrganizationUpdateOne) ClearLogoURL() *OrganizationUpdateOne {
 	_u.mutation.ClearLogoURL()
+	return _u
+}
+
+// SetCategory sets the "category" field.
+func (_u *OrganizationUpdateOne) SetCategory(v string) *OrganizationUpdateOne {
+	_u.mutation.SetCategory(v)
+	return _u
+}
+
+// SetNillableCategory sets the "category" field if the given value is not nil.
+func (_u *OrganizationUpdateOne) SetNillableCategory(v *string) *OrganizationUpdateOne {
+	if v != nil {
+		_u.SetCategory(*v)
+	}
+	return _u
+}
+
+// ClearCategory clears the value of the "category" field.
+func (_u *OrganizationUpdateOne) ClearCategory() *OrganizationUpdateOne {
+	_u.mutation.ClearCategory()
 	return _u
 }
 
@@ -710,6 +756,12 @@ func (_u *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizati
 	}
 	if _u.mutation.LogoURLCleared() {
 		_spec.ClearField(organization.FieldLogoURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.Category(); ok {
+		_spec.SetField(organization.FieldCategory, field.TypeString, value)
+	}
+	if _u.mutation.CategoryCleared() {
+		_spec.ClearField(organization.FieldCategory, field.TypeString)
 	}
 	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(organization.FieldIsActive, field.TypeBool, value)

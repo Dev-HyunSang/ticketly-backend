@@ -11,6 +11,7 @@ type Organization struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description,omitempty"`
 	LogoURL     string    `json:"logo_url,omitempty"`
+	Category    string    `json:"category,omitempty"`
 	OwnerID     uuid.UUID `json:"owner_id"`
 	IsActive    bool      `json:"is_active"`
 	CreatedAt   time.Time `json:"created_at"`

@@ -130,6 +130,29 @@ func (r *PaymentRepository) GetByEventID(eventID uuid.UUID) ([]*domain.Payment, 
 	return result, nil
 }
 
+func (r *PaymentRepository) GetCompletedPaymentsByEventID(eventID uuid.UUID) ([]*domain.Payment, error) {
+	ctx := context.Background()
+
+	payments, err := r.client.Payment.
+		Query().
+		Where(
+			payment.EventID(eventID),
+			payment.StatusEQ(payment.StatusCompleted),
+		).
+		Order(ent.Asc(payment.FieldCreatedAt)).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get completed payments by event ID: %w", err)
+	}
+
+	result := make([]*domain.Payment, len(payments))
+	for i, p := range payments {
+		result[i] = r.mapToDomain(p)
+	}
+
+	return result, nil
+}
+
 func (r *PaymentRepository) UpdateStatus(paymentID uuid.UUID, status string, paymentKey string) error {
 	ctx := context.Background()
 
@@ -150,6 +173,30 @@ func (r *PaymentRepository) UpdateStatus(paymentID uuid.UUID, status string, pay
 	}
 
 	return nil
+}
+
+func (r *PaymentRepository) GetParticipantCountByEventID(eventID uuid.UUID) (int, error) {
+	ctx := context.Background()
+
+	// Get all completed payments for the event
+	payments, err := r.client.Payment.
+		Query().
+		Where(
+			payment.EventID(eventID),
+			payment.StatusEQ(payment.StatusCompleted),
+		).
+		All(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get participant count: %w", err)
+	}
+
+	// Sum up all ticket quantities from completed payments
+	totalParticipants := 0
+	for _, p := range payments {
+		totalParticipants += p.TicketQuantity
+	}
+
+	return totalParticipants, nil
 }
 
 func (r *PaymentRepository) mapToDomain(p *ent.Payment) *domain.Payment {

@@ -60,6 +60,7 @@ func (r *eventRepository) Create(evt *domain.Event) (*domain.Event, error) {
 		EndTime:          createdEvent.EndTime,
 		TotalTickets:     createdEvent.TotalTickets,
 		AvailableTickets: createdEvent.AvailableTickets,
+		ParticipantCount: createdEvent.ParticipantCount,
 		TicketPrice:      createdEvent.TicketPrice,
 		Currency:         createdEvent.Currency,
 		ThumbnailURL:     createdEvent.ThumbnailURL,
@@ -97,6 +98,7 @@ func (r *eventRepository) GetByID(eventID uuid.UUID) (*domain.Event, error) {
 		EndTime:          evt.EndTime,
 		TotalTickets:     evt.TotalTickets,
 		AvailableTickets: evt.AvailableTickets,
+		ParticipantCount: evt.ParticipantCount,
 		TicketPrice:      evt.TicketPrice,
 		Currency:         evt.Currency,
 		ThumbnailURL:     evt.ThumbnailURL,
@@ -134,6 +136,7 @@ func (r *eventRepository) GetByOrganizationID(orgID uuid.UUID) ([]*domain.Event,
 			EndTime:          evt.EndTime,
 			TotalTickets:     evt.TotalTickets,
 			AvailableTickets: evt.AvailableTickets,
+			ParticipantCount: evt.ParticipantCount,
 			TicketPrice:      evt.TicketPrice,
 			Currency:         evt.Currency,
 			ThumbnailURL:     evt.ThumbnailURL,
@@ -334,6 +337,24 @@ func (r *eventRepository) UpdateAvailableTickets(eventID uuid.UUID, tickets int)
 	return nil
 }
 
+// UpdateParticipantCount updates the participant count
+func (r *eventRepository) UpdateParticipantCount(eventID uuid.UUID, count int) error {
+	ctx := context.Background()
+
+	err := r.client.Event.
+		UpdateOneID(eventID).
+		SetParticipantCount(count).
+		Exec(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return domain.ErrNotFound
+		}
+		return fmt.Errorf("failed to update participant count: %w", err)
+	}
+
+	return nil
+}
+
 // Helper function to map events with organization
 func (r *eventRepository) mapEventsWithOrganization(events []*ent.Event) []*domain.EventWithOrganization {
 	result := make([]*domain.EventWithOrganization, len(events))
@@ -355,6 +376,7 @@ func (r *eventRepository) mapEventsWithOrganization(events []*ent.Event) []*doma
 				EndTime:          evt.EndTime,
 				TotalTickets:     evt.TotalTickets,
 				AvailableTickets: evt.AvailableTickets,
+				ParticipantCount: evt.ParticipantCount,
 				TicketPrice:      evt.TicketPrice,
 				Currency:         evt.Currency,
 				ThumbnailURL:     evt.ThumbnailURL,
